@@ -1,0 +1,16 @@
+{
+  "name": "clang-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "http-server -o",
+    "b:add": "zx scripts/build.mjs -i add.cpp",
+    "b:addc": "zx scripts/build.mjs -i addc.c",
+    "b:simd": "zx scripts/build.mjs -i simd.cpp -m malloc.cpp",
+    "b:hello": "zx scripts/build.mjs -i hello.cpp -t exe"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

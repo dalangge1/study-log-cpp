@@ -1,0 +1,6 @@
+*.wasm
+*.wat
+*.obj
+*.exe
+
+clang-help.txt
