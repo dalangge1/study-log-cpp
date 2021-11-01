@@ -11,19 +11,23 @@ switch (t) {
   case 'wasm': {
     const flags = [
       `--target=wasm32`,
-      '-msimd128',
+      // '-msimd128',
       '-nostdlib',
       '-O3',
       '-flto',
       '-DNDEBUG',
+      // '-gdwarf',
+      // '-gdwarf-4',
       '-Wl,--lto-O3',
       '-Wl,--no-entry',
       '-Wl,--export-all',
     ];
 
     await $`${CC} ${flags} -o ${`dist/${basename}.wasm`} src/${i} ${deps}`;
+    await $`${CC} ${flags} -msimd128 -D__SIMD__=1 -o ${`dist/${basename}.simd.wasm`} src/${i} ${deps}`;
     $.verbose = false;
     await $`wasm-opt dist/${basename}.wasm --print -S -o dist/${basename}.wat`;
+    await $`wasm-opt dist/${basename}.simd.wasm --print -S -o dist/${basename}.simd.wat`;
     break;
   }
 

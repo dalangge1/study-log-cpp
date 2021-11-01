@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "http-server -o",
     "b:add": "zx scripts/build.mjs -i add.cpp",
     "b:addc": "zx scripts/build.mjs -i addc.c",
     "b:simd": "zx scripts/build.mjs -i simd.cpp -m malloc.cpp",
-    "b:hello": "zx scripts/build.mjs -i hello.cpp -t exe"
+    "b:hello": "zx scripts/build.mjs -i hello.cpp -t exe",
+    "b:matrix": "zx scripts/build.mjs -i matrix.cpp -m malloc.cpp"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "deepkolos<deepkolos@qq.com>",
+  "license": "ISC",
+  "dependencies": {
+    "gl-matrix-wasm": "^0.8.0"
+  }
 }

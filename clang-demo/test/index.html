@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<script src="./libs/gl_matrix_wasm.js"></script>
+<script type="module">
+  import { simd } from './simd.js';
+  import { add } from './add.js';
+  import { matrix } from './matrix.js';
+  const glMatrixWasm = window.glMatrixWasm;
+
+  const specs = { simd, add, matrix };
+
+  const params = new URLSearchParams(location.search);
+  const specific = params.get('spec');
+
+  async function main() {
+    if (specific) {
+      const spec = specs[specific];
+      if (spec) await spec();
+    } else {
+      for (let specName of Object.keys(specs)) {
+        await specs[specName]();
+      }
+    }
+  }
+
+  main();
+</script>
