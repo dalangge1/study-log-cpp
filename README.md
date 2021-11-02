@@ -2,20 +2,20 @@
 
 ## 2021-11-2
 
-0. 真相大白了, 是没缓存instance.exports导致, 性能与rust差不多了, 稍微慢一些, 估计是用了f64导致, 用了double导致, 改为float就比rust的快了
+0. 真相大白了, 是没缓存 instance.exports 导致, 性能与 rust 差不多了, 稍微慢一些, 估计是用了 f64 导致, 用了 double 导致, 改为 float 就比 rust 的快了
 1. 优化测试空转耗时
-2. simd的好处还是没明显体现出来, 有点尴尬; simd再频繁调用的情况下确实没啥亮眼, 但是再wasm里循环是无敌的存在
+2. simd 的好处还是没明显体现出来, 有点尴尬; simd 再频繁调用的情况下确实没啥亮眼, 但是在 wasm 里循环是无敌的存在; wat 里只有两个 call; 不对, 只要输入存在变化耗时就正常了
 
 ## 2021-11-1
 
 https://zhuanlan.zhihu.com/p/158586853
 
-> 这时候原本的myadd函数名变成了__Z5myaddii，这对于js的使用方很不友好，因此我们需要关掉c++的name mangle处理。 通过extern "C"我们可以阻止c++的默认name mangle行为 
+> 这时候原本的 myadd 函数名变成了\_\_Z5myaddii，这对于 js 的使用方很不友好，因此我们需要关掉 c++的 name mangle 处理。 通过 extern "C"我们可以阻止 c++的默认 name mangle 行为
 
-0. 貌似clang设置输出wasm source map比较困难, 找emcc的对clang命令行参数的拼接也没找到
-1. 卧槽, 真的可以自动优化输出simd的指令, 这样太强了, 难怪之前simd和非no-simd测试相差非常小
-2. 难道不是assemblyscript的锅, c++编译出来的add循环100_000都得20ms, rust的编译就那么强么
-3. 看了下matrix.wat和gl-matrix-wasm的wast的区别, 前者用了f64, 后者没有, 这性能差距也太大了吧, 这原因值得深究了
+0. 貌似 clang 设置输出 wasm source map 比较困难, 找 emcc 的对 clang 命令行参数的拼接也没找到
+1. 卧槽, 真的可以自动优化输出 simd 的指令, 这样太强了, 难怪之前 simd 和非 no-simd 测试相差非常小
+2. 难道不是 assemblyscript 的锅, c++编译出来的 add 循环 100_000 都得 20ms, rust 的编译就那么强么
+3. 看了下 matrix.wat 和 gl-matrix-wasm 的 wast 的区别, 前者用了 f64, 后者没有, 这性能差距也太大了吧, 这原因值得深究了
 
 ## 2021-10-31
 

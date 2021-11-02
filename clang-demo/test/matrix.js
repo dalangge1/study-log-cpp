@@ -130,16 +130,17 @@ export async function matrix() {
       // 100_000,
     );
 
+    const loopCount = 1_000_000;
     benchmark(
       {
         wasm_auto_simd() {
-          wasmSIMDAPI.test(0);
+          wasmSIMDAPI.test(0, loopCount);
         },
         wasm_hand_simd() {
-          wasmSIMDAPI.test(1);
+          wasmSIMDAPI.test(1, loopCount);
         },
         wasm_bench_simd() {
-          wasmSIMDAPI.test(2);
+          wasmSIMDAPI.test(2, loopCount);
         },
       },
       1,

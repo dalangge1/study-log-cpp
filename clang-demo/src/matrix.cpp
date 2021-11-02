@@ -267,29 +267,50 @@ extern "C"
   }
 
   float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
-  float m2[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  float m2[16] = {1, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 1};
   float m3[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
   double m4[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
-  double m5[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  double m5[16] = {1, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 1};
   double m6[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
 
-#define ITERATIONS 20000000
-
-  void test(int type)
+  void test(int type, int loop)
   {
-    int64_t i;
+    int i;
+    float *m1Ptr = m1;
+    float *m2Ptr = m2;
+    float *tmp1Ptr;
+
+    double *m4Ptr = m4;
+    double *m5Ptr = m5;
+    double *tmp2Ptr;
 
     if (type == 0)
-      for (i = 0; i < ITERATIONS; i++)
+      for (i = 0; i < loop; i++)
+      {
+        tmp1Ptr = m1Ptr;
+        m1Ptr = m2Ptr;
+        m2Ptr = tmp1Ptr;
         mat4_multiply(m1, m2, m3);
+      }
 
     if (type == 1)
-      for (i = 0; i < ITERATIONS; i++)
-        mat4_multiply_simd(m1, m2, m3);
+      for (i = 0; i < loop; i++)
+      {
+        tmp1Ptr = m1Ptr;
+        m1Ptr = m2Ptr;
+        m2Ptr = tmp1Ptr;
+        mat4_multiply_simd(m1Ptr, m2Ptr, m3);
+      }
 
     if (type == 2)
-      for (i = 0; i < ITERATIONS * 100; i++)
-        bench_simd(m4, m5, m6);
+      for (i = 0; i < loop; i++)
+      {
+        // 若无下面3行, bench_simd是不耗时
+        tmp2Ptr = m4Ptr;
+        m4Ptr = m5Ptr;
+        m5Ptr = tmp2Ptr;
+        bench_simd(m4Ptr, m5Ptr, m6);
+      }
   }
 #endif
 }
