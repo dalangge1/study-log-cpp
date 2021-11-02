@@ -57,7 +57,7 @@ export const expect = inputValue => {
 /**
  * @param {{[name: string]: () => void | Promise<void>}} obj
  */
-export const benchmark = (obj, loopCount = 10000) => {
+export const benchmark = (obj, loopCount = 100000) => {
   /**
    * @type {{[name: string]: number}}
    */
@@ -66,7 +66,8 @@ export const benchmark = (obj, loopCount = 10000) => {
 
   Object.keys(obj).forEach(key => {
     const t = performance.now();
-    for (let i = loopCount; i > 0; i--) obj[key]();
+    const fn = obj[key];
+    for (let i = loopCount | 0; i > 0; i--) fn(i);
     result[key] = performance.now() - t;
   });
 

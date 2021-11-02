@@ -2,9 +2,8 @@
 
 extern "C"
 {
-  void mat4_multiply(double *a, double *b, double *out)
+  void mat4_multiply(float *a, float *b, float *out)
   {
-
     float b11 = b[0],
           b12 = b[4],
           b13 = b[8],
@@ -62,4 +61,235 @@ extern "C"
     out[11] = a1 * b13 + a2 * b23 + a3 * b33 + a4 * b43;
     out[15] = a1 * b14 + a2 * b24 + a3 * b34 + a4 * b44;
   }
+
+#ifdef __SIMD__
+  float tmpF32[4];
+
+  void mat4_multiply_simd(float *ae, float *be, float *te)
+  {
+    v128_t r0 = wasm_f32x4_replace_lane(
+        wasm_f32x4_replace_lane(
+            wasm_f32x4_replace_lane(wasm_f32x4_splat(be[0]), 1, be[4]),
+            2,
+            be[8]),
+        3,
+        be[12]);
+    v128_t r1 = wasm_f32x4_replace_lane(
+        wasm_f32x4_replace_lane(
+            wasm_f32x4_replace_lane(wasm_f32x4_splat(be[1]), 1, be[5]),
+            2,
+            be[9]),
+        3,
+        be[13]);
+    v128_t r2 = wasm_f32x4_replace_lane(
+        wasm_f32x4_replace_lane(
+            wasm_f32x4_replace_lane(wasm_f32x4_splat(be[2]), 1, be[6]),
+            2,
+            be[10]),
+        3,
+        be[14]);
+    v128_t r3 = wasm_f32x4_replace_lane(
+        wasm_f32x4_replace_lane(
+            wasm_f32x4_replace_lane(wasm_f32x4_splat(be[3]), 1, be[7]),
+            2,
+            be[11]),
+        3,
+        be[15]);
+
+    v128_t o0 = wasm_f32x4_add(
+        wasm_f32x4_add(
+            wasm_f32x4_add(
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[0]), r0),
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[4]), r1)),
+            wasm_f32x4_mul(wasm_f32x4_splat(ae[8]), r2)),
+        wasm_f32x4_mul(wasm_f32x4_splat(ae[12]), r3));
+    v128_t o1 = wasm_f32x4_add(
+        wasm_f32x4_add(
+            wasm_f32x4_add(
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[1]), r0),
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[5]), r1)),
+            wasm_f32x4_mul(wasm_f32x4_splat(ae[9]), r2)),
+        wasm_f32x4_mul(wasm_f32x4_splat(ae[13]), r3));
+    v128_t o2 = wasm_f32x4_add(
+        wasm_f32x4_add(
+            wasm_f32x4_add(
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[2]), r0),
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[6]), r1)),
+            wasm_f32x4_mul(wasm_f32x4_splat(ae[10]), r2)),
+        wasm_f32x4_mul(wasm_f32x4_splat(ae[14]), r3));
+    v128_t o3 = wasm_f32x4_add(
+        wasm_f32x4_add(
+            wasm_f32x4_add(
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[3]), r0),
+                wasm_f32x4_mul(wasm_f32x4_splat(ae[7]), r1)),
+            wasm_f32x4_mul(wasm_f32x4_splat(ae[11]), r2)),
+        wasm_f32x4_mul(wasm_f32x4_splat(ae[15]), r3));
+
+    wasm_v128_store(&tmpF32, o0);
+    te[0] = tmpF32[0];
+    te[4] = tmpF32[1];
+    te[8] = tmpF32[2];
+    te[12] = tmpF32[3];
+
+    wasm_v128_store(&tmpF32, o1);
+    te[1] = tmpF32[0];
+    te[5] = tmpF32[1];
+    te[9] = tmpF32[2];
+    te[13] = tmpF32[3];
+
+    wasm_v128_store(&tmpF32, o2);
+    te[2] = tmpF32[0];
+    te[6] = tmpF32[1];
+    te[10] = tmpF32[2];
+    te[14] = tmpF32[3];
+
+    wasm_v128_store(&tmpF32, o3);
+    te[3] = tmpF32[0];
+    te[7] = tmpF32[1];
+    te[11] = tmpF32[2];
+    te[15] = tmpF32[3];
+
+    // store 比 extrace 快
+
+    // te[0] = wasm_f32x4_extract_lane(o0, 0);
+    // te[4] = wasm_f32x4_extract_lane(o0, 1);
+    // te[8] = wasm_f32x4_extract_lane(o0, 2);
+    // te[12] = wasm_f32x4_extract_lane(o0, 3);
+
+    // te[1] = wasm_f32x4_extract_lane(o1, 0);
+    // te[5] = wasm_f32x4_extract_lane(o1, 1);
+    // te[9] = wasm_f32x4_extract_lane(o1, 2);
+    // te[13] = wasm_f32x4_extract_lane(o1, 3);
+
+    // te[2] = wasm_f32x4_extract_lane(o2, 0);
+    // te[6] = wasm_f32x4_extract_lane(o2, 1);
+    // te[10] = wasm_f32x4_extract_lane(o2, 2);
+    // te[14] = wasm_f32x4_extract_lane(o2, 3);
+
+    // te[3] = wasm_f32x4_extract_lane(o3, 0);
+    // te[7] = wasm_f32x4_extract_lane(o3, 1);
+    // te[11] = wasm_f32x4_extract_lane(o3, 2);
+    // te[15] = wasm_f32x4_extract_lane(o3, 3);
+  }
+
+  // code from https://github.com/ngzhian/simd-benchmarks/blob/master/matrix_multiply_intrinsics.cpp
+  // 完全用simd的指令
+  void bench_simd(double T1x[], double T2x[], double Outx[])
+  {
+    v128_t a0 = wasm_v128_load(T1x + 0);
+    v128_t a1 = wasm_v128_load(T1x + 2);
+    v128_t a2 = wasm_v128_load(T1x + 4);
+    v128_t a3 = wasm_v128_load(T1x + 6);
+    v128_t a4 = wasm_v128_load(T1x + 8);
+    v128_t a5 = wasm_v128_load(T1x + 10);
+    v128_t a6 = wasm_v128_load(T1x + 12);
+    v128_t a7 = wasm_v128_load(T1x + 14);
+
+    v128_t b0 = wasm_v128_load(T2x + 0);
+    v128_t b1 = wasm_v128_load(T2x + 2);
+
+    wasm_v128_store(Outx + 0,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b0, 0)), a0),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b0, 1)), a2),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b1, 0)), a4),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b1, 1)), a6)))));
+    wasm_v128_store(Outx + 2,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b0, 0)), a1),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b0, 1)), a3),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b1, 0)), a5),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b1, 1)), a7)))));
+
+    v128_t b2 = wasm_v128_load(T2x + 4);
+    v128_t b3 = wasm_v128_load(T2x + 6);
+
+    wasm_v128_store(Outx + 4,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b2, 0)), a0),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b2, 1)), a2),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b3, 0)), a4),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b3, 1)), a6)))));
+    wasm_v128_store(Outx + 6,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b2, 0)), a1),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b2, 1)), a3),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b3, 0)), a5),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b3, 1)), a7)))));
+
+    v128_t b4 = wasm_v128_load(T2x + 8);
+    v128_t b5 = wasm_v128_load(T2x + 10);
+
+    wasm_v128_store(Outx + 8,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b4, 0)), a0),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b4, 1)), a2),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b5, 0)), a4),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b5, 1)), a6)))));
+    wasm_v128_store(Outx + 10,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b4, 0)), a1),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b4, 1)), a3),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b5, 0)), a5),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b5, 1)), a7)))));
+
+    v128_t b6 = wasm_v128_load(T2x + 12);
+    v128_t b7 = wasm_v128_load(T2x + 14);
+
+    wasm_v128_store(Outx + 12,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b6, 0)), a0),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b6, 1)), a2),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b7, 0)), a4),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b7, 1)), a6)))));
+    wasm_v128_store(Outx + 14,
+                    wasm_f64x2_add(
+                        wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b6, 0)), a1),
+                        wasm_f64x2_add(
+                            wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b6, 1)), a3),
+                            wasm_f64x2_add(
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b7, 0)), a5),
+                                wasm_f64x2_mul(wasm_f64x2_splat(wasm_f64x2_extract_lane(b7, 1)), a7)))));
+  }
+
+  float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  float m2[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  float m3[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  double m4[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  double m5[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+  double m6[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
+
+#define ITERATIONS 20000000
+
+  void test(int type)
+  {
+    int64_t i;
+
+    if (type == 0)
+      for (i = 0; i < ITERATIONS; i++)
+        mat4_multiply(m1, m2, m3);
+
+    if (type == 1)
+      for (i = 0; i < ITERATIONS; i++)
+        mat4_multiply_simd(m1, m2, m3);
+
+    if (type == 2)
+      for (i = 0; i < ITERATIONS * 100; i++)
+        bench_simd(m4, m5, m6);
+  }
+#endif
 }

@@ -1,4 +1,8 @@
-int add(int a, int b)
+
+extern "C"
 {
-  return a + b;
+  int add(int a, int b)
+  {
+    return a + b;
+  }
 }

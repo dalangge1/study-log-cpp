@@ -33,7 +33,9 @@
     "charconv": "cpp",
     "cstdint": "cpp",
     "type_traits": "cpp",
-    "__locale": "cpp"
+    "__locale": "cpp",
+    "bitset": "cpp"
   },
-  "C_Cpp.errorSquiggles": "Disabled"
+  "C_Cpp.errorSquiggles": "Disabled",
+  "C_Cpp.dimInactiveRegions": false
 }

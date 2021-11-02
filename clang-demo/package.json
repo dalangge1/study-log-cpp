@@ -16,6 +16,7 @@
   "author": "deepkolos<deepkolos@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "gl-matrix-wasm": "^0.8.0"
+    "gl-matrix-wasm": "^0.8.0",
+    "three": "^0.134.0"
   }
 }

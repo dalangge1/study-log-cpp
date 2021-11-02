@@ -3,6 +3,8 @@ export async function load(name) {
     WebAssembly.instantiateStreaming(fetch(`../dist/${name}.wasm`)),
     WebAssembly.instantiateStreaming(fetch(`../dist/${name}.simd.wasm`)),
   ]);
+  const { exports: wasmAPI } = instance;
+  const { exports: wasmSIMDAPI } = instanceSIMD;
 
-  return { instance, instanceSIMD };
+  return { instance, instanceSIMD, wasmAPI, wasmSIMDAPI };
 }

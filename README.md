@@ -1,5 +1,11 @@
 # study-log-cpp
 
+## 2021-11-2
+
+0. 真相大白了, 是没缓存instance.exports导致, 性能与rust差不多了, 稍微慢一些, 估计是用了f64导致, 用了double导致, 改为float就比rust的快了
+1. 优化测试空转耗时
+2. simd的好处还是没明显体现出来, 有点尴尬; simd再频繁调用的情况下确实没啥亮眼, 但是再wasm里循环是无敌的存在
+
 ## 2021-11-1
 
 https://zhuanlan.zhihu.com/p/158586853

@@ -1,38 +1,38 @@
-import { test, expect, benchmark } from './test.js';
-import { load } from './utils.js';
+import { test, expect, benchmark } from './libs/test.js';
+import { load } from './libs/utils.js';
 
 export async function simd() {
-  const { instance, instanceSIMD } = await load('simd');
+  const { instance, instanceSIMD, wasmAPI, wasmSIMDAPI } = await load('simd');
 
   const jsArrayExpect = new Array(4 * 10).fill(6);
 
   /**
    * @param {WebAssembly.Instance} instance
    */
-  function init(instance) {
+  function init(wasmAPI) {
     const jsArrayA = new Array(4 * 10).fill(2);
     const jsArrayB = new Array(4 * 10).fill(3);
 
     // Allocate memory for 4 32-bit integers
     // and return get starting address.
-    const cArrayPointerA = instance.exports.malloc(jsArrayA.length * 4);
-    const cArrayPointerB = instance.exports.malloc(jsArrayA.length * 4);
-    const cArrayPointerOut = instance.exports.malloc(jsArrayA.length * 4);
+    const cArrayPointerA = wasmAPI.malloc(jsArrayA.length * 4);
+    const cArrayPointerB = wasmAPI.malloc(jsArrayA.length * 4);
+    const cArrayPointerOut = wasmAPI.malloc(jsArrayA.length * 4);
 
     // Turn that sequence of 32-bit integers
     // into a Int32Array, starting at that address.
     const cArrayA = new Int32Array(
-      instance.exports.memory.buffer,
+      wasmAPI.memory.buffer,
       cArrayPointerA,
       jsArrayA.length,
     );
     const cArrayB = new Int32Array(
-      instance.exports.memory.buffer,
+      wasmAPI.memory.buffer,
       cArrayPointerB,
       jsArrayA.length,
     );
     const cArrayOut = new Int32Array(
-      instance.exports.memory.buffer,
+      wasmAPI.memory.buffer,
       cArrayPointerOut,
       jsArrayA.length,
     );
@@ -50,13 +50,13 @@ export async function simd() {
     };
   }
 
-  const state = init(instance);
-  const stateSIMD = init(instanceSIMD);
+  const state = init(wasmAPI);
+  const stateSIMD = init(wasmSIMDAPI);
 
   // performance test
   test('multiply array', () => {
     // Run the function, passing the starting address and length.
-    instanceSIMD.exports.multiply_arrays(
+    wasmSIMDAPI.multiply_arrays(
       stateSIMD.cArrayPointerOut,
       stateSIMD.cArrayPointerA,
       stateSIMD.cArrayPointerB,
@@ -64,7 +64,7 @@ export async function simd() {
     );
     expect(stateSIMD.cArrayOut).toBe(jsArrayExpect);
 
-    instance.exports.multiply_arrays_no_simd(
+    wasmAPI.multiply_arrays_no_simd(
       state.cArrayPointerOut,
       state.cArrayPointerA,
       state.cArrayPointerB,
@@ -75,7 +75,7 @@ export async function simd() {
     benchmark(
       {
         wasm_simd() {
-          instanceSIMD.exports.multiply_arrays(
+          wasmSIMDAPI.multiply_arrays(
             stateSIMD.cArrayPointerOut,
             stateSIMD.cArrayPointerA,
             stateSIMD.cArrayPointerB,
@@ -83,12 +83,28 @@ export async function simd() {
           );
         },
         wasm() {
-          instance.exports.multiply_arrays_no_simd(
+          wasmAPI.multiply_arrays_no_simd(
             state.cArrayPointerOut,
             state.cArrayPointerA,
             state.cArrayPointerB,
             state.jsArrayA.length,
           );
+        },
+      },
+      100000,
+    );
+  });
+
+  test('void fn', () => {
+    const { exports } = instance;
+    benchmark(
+      {
+        wasm_void_fn_call_with_cached_exports() {
+          exports.void_fn();
+        },
+        // 不缓存exports会导致非常可观的额外耗时
+        wasm_void_fn_call_with_instance_exports() {
+          instance.exports.void_fn();
         },
       },
       100000,

@@ -23,4 +23,6 @@ extern "C"
       out[i] = in_a[i] * in_b[i];
     }
   }
+
+  void void_fn() {}
 }
