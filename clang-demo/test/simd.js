@@ -110,4 +110,11 @@ export async function simd() {
       100000,
     );
   });
+
+  test('f32x4_make', () => {
+    expect(wasmSIMDAPI.test_f32x4_make(1, 2, 3, 4)).toBe(20);
+  });
+  test('v32x4_shuffle', () => {
+    expect(wasmSIMDAPI.test_f32x4_shuffle(1, 2, 3, 4)).toBe(10);
+  });
 }

@@ -49,7 +49,11 @@
     "__functional_base": "cpp",
     "__functional_base_03": "cpp",
     "__tuple": "cpp",
-    "forward_list": "cpp"
+    "forward_list": "cpp",
+    "format": "cpp",
+    "xiosbase": "cpp",
+    "xlocale": "cpp",
+    "ios": "cpp"
   },
   "C_Cpp.errorSquiggles": "Disabled",
   "C_Cpp.dimInactiveRegions": false

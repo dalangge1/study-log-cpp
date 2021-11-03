@@ -1,5 +1,54 @@
 # study-log-cpp
 
+> 铁打的仓库，流水的日志
+
+## 2021-11-3
+
+0. 感觉 shuffle 指令大有作为, 极大方便数据的设置, 得学一下;
+1. 先阅读 glm, 看看 simd 指令 是怎么用的; 卧槽，存储的是 v128
+2. C++ 代码格式化风格改为 Google
+3. 看了 glb 的 matrix_mul 重新整理 mat4_multiply_simd2, 快了 8ms
+
+https://stackoverflow.com/questions/57032331/understanding-the-simd-shuffle-control-mask
+https://github.com/g-truc/glm/blob/master/glm/simd/matrix.h#L36
+
+wasm_f32x4_make 是下面的语法糖，和我现在的写法是一样的，还是挺方便的
+
+```wasm
+(f32x4.replace_lane 3
+  (f32x4.replace_lane 2
+  (f32x4.replace_lane 1
+    (f32x4.splat
+    (local.get $0)
+    )
+    (local.get $1)
+  )
+  (local.get $2)
+  )
+  (local.get $3)
+)
+```
+
+```json
+{
+  "multiply matrix_benchmark_1000000 loop in js": {
+    "wasm_auto_simd": "34.30ms (x1.885)",
+    "wasm_hand_simd": "26.40ms (x1.451)",
+    "wasm_hand_simd2": "18.20ms (x1.000)",
+    "wasm_bench_simd": "34.90ms (x1.918)",
+    "wasm": "32.10ms (x1.764)",
+    "rust_wasm": "41.90ms (x2.302)",
+    "threejs": "34.60ms (x1.901)"
+  },
+  "multiply matrix_benchmark_1 loop in wasm": {
+    "wasm_auto_simd": "30.30ms (x4.734)",
+    "wasm_hand_simd": "20.00ms (x3.125)",
+    "wasm_hand_simd2": "6.40ms (x1.000)",
+    "wasm_bench_simd": "17.30ms (x2.703)"
+  }
+}
+```
+
 ## 2021-11-2
 
 0. 真相大白了, 是没缓存 instance.exports 导致, 性能与 rust 差不多了, 稍微慢一些, 估计是用了 f64 导致, 用了 double 导致, 改为 float 就比 rust 的快了

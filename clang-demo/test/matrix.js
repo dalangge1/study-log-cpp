@@ -10,8 +10,8 @@ export async function matrix() {
 
   // prettier-ignore
   const ms = [
-    glMatrixWasm.Matrix4.fromValues(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
-    glMatrixWasm.Matrix4.fromValues(3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
+    glMatrixWasm.Matrix4.fromValues(1, 2, 3, 4, 5, 6, 7, 8, 8, 2, 1, 2, 7, 1, 3, 2),
+    glMatrixWasm.Matrix4.fromValues(1, 2, 3, 1, 5, 6, 7, 2, 8, 2, 1, 2, 9, 1, 3, 2),
     glMatrixWasm.Matrix4.fromValues(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
   ];
 
@@ -21,8 +21,8 @@ export async function matrix() {
    * @param {WebAssembly.Exports} wasmAPI
    */
   function init(wasmAPI) {
-    const jsArrayA = new Array(4 * 4).fill(2);
-    const jsArrayB = new Array(4 * 4).fill(3);
+    const jsArrayA = [1, 2, 3, 4, 5, 6, 7, 8, 8, 2, 1, 2, 7, 1, 3, 2];
+    const jsArrayB = [1, 2, 3, 1, 5, 6, 7, 2, 8, 2, 1, 2, 9, 1, 3, 2];
 
     // Allocate memory for 4 32-bit integers
     // and return get starting address.
@@ -70,21 +70,35 @@ export async function matrix() {
     const m4JSA = new Matrix4().fromArray(state.jsArrayA);
     const m4JSB = new Matrix4().fromArray(state.jsArrayB);
     const glMatrixWasmMatrix4 = glMatrixWasm.Matrix4;
+    m4JSA.multiplyMatrices(m4JSA, m4JSB);
 
-    // Run the function, passing the starting address and length.
+    wasmSIMDAPI.mat4_multiply_simd2(
+      stateSIMD.cArrayPointerA,
+      stateSIMD.cArrayPointerB,
+      stateSIMD.cArrayPointerOut,
+    );
+    expect(stateSIMD.cArrayOut).toBe(m4JSA.elements);
+
     wasmSIMDAPI.mat4_multiply(
       stateSIMD.cArrayPointerA,
       stateSIMD.cArrayPointerB,
       stateSIMD.cArrayPointerOut,
     );
-    expect(stateSIMD.cArrayOut).toBe(jsArrayExpect);
+    expect(stateSIMD.cArrayOut).toBe(m4JSA.elements);
+
+    wasmSIMDAPI.mat4_multiply_simd(
+      stateSIMD.cArrayPointerA,
+      stateSIMD.cArrayPointerB,
+      stateSIMD.cArrayPointerOut,
+    );
+    expect(stateSIMD.cArrayOut).toBe(m4JSA.elements);
 
     wasmAPI.mat4_multiply(
       state.cArrayPointerA,
       state.cArrayPointerB,
       state.cArrayPointerOut,
     );
-    expect(state.cArrayOut).toBe(jsArrayExpect);
+    expect(state.cArrayOut).toBe(m4JSA.elements);
 
     benchmark(
       {
@@ -97,6 +111,13 @@ export async function matrix() {
         },
         wasm_hand_simd() {
           wasmSIMDAPI.mat4_multiply_simd(
+            stateSIMD.cArrayPointerA,
+            stateSIMD.cArrayPointerB,
+            stateSIMD.cArrayPointerOut,
+          );
+        },
+        wasm_hand_simd2() {
+          wasmSIMDAPI.mat4_multiply_simd2(
             stateSIMD.cArrayPointerA,
             stateSIMD.cArrayPointerB,
             stateSIMD.cArrayPointerOut,
@@ -138,6 +159,9 @@ export async function matrix() {
         },
         wasm_hand_simd() {
           wasmSIMDAPI.test(1, loopCount);
+        },
+        wasm_hand_simd2() {
+          wasmSIMDAPI.test(3, loopCount);
         },
         wasm_bench_simd() {
           wasmSIMDAPI.test(2, loopCount);
