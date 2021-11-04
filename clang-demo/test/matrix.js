@@ -15,8 +15,6 @@ export async function matrix() {
     glMatrixWasm.Matrix4.fromValues(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
   ];
 
-  const jsArrayExpect = new Array(4 * 4).fill(24);
-
   /**
    * @param {WebAssembly.Exports} wasmAPI
    */
@@ -66,11 +64,18 @@ export async function matrix() {
   const stateSIMD = init(wasmSIMDAPI);
 
   // performance test
-  test('multiply matrix', () => {
+  test('matrix_multiply', () => {
     const m4JSA = new Matrix4().fromArray(state.jsArrayA);
     const m4JSB = new Matrix4().fromArray(state.jsArrayB);
     const glMatrixWasmMatrix4 = glMatrixWasm.Matrix4;
     m4JSA.multiplyMatrices(m4JSA, m4JSB);
+
+    const mat4_v128_1 = wasmSIMDAPI.set_mat4_v128(1, stateSIMD.cArrayPointerA);
+    const mat4_v128_2 = wasmSIMDAPI.set_mat4_v128(2, stateSIMD.cArrayPointerB);
+    const mat4_v128_3 = wasmSIMDAPI.set_mat4_v128(
+      3,
+      stateSIMD.cArrayPointerOut,
+    );
 
     wasmSIMDAPI.mat4_multiply_simd2(
       stateSIMD.cArrayPointerA,
@@ -123,6 +128,13 @@ export async function matrix() {
             stateSIMD.cArrayPointerOut,
           );
         },
+        wasm_glm_simd() {
+          wasmSIMDAPI.mat4_multiply_simd_glm(
+            mat4_v128_1,
+            mat4_v128_2,
+            mat4_v128_3,
+          );
+        },
         wasm_bench_simd() {
           wasmSIMDAPI.bench_simd(
             stateSIMD.cArrayPointerA,
@@ -149,6 +161,7 @@ export async function matrix() {
       // 100_000,
       1_000_000,
       // 100_000,
+      `_loop_in_js`,
     );
 
     const loopCount = 1_000_000;
@@ -163,11 +176,53 @@ export async function matrix() {
         wasm_hand_simd2() {
           wasmSIMDAPI.test(3, loopCount);
         },
+        wasm_glm_simd() {
+          wasmSIMDAPI.test(4, loopCount);
+        },
         wasm_bench_simd() {
           wasmSIMDAPI.test(2, loopCount);
         },
       },
       1,
+      `_loop_in_wasm_${loopCount}`,
+    );
+  });
+
+  test('matrix_determinant', () => {
+    const m4JSA = new Matrix4().fromArray([
+      2, 3, 4, 5, -1, -21, -3, -4, 6, 7, 8, 10, -8, -9, -10, -12,
+    ]);
+
+    benchmark(
+      {
+        wasm() {
+          wasmAPI.mat4_determinant(state.cArrayPointerA);
+        },
+        wasm_hand_simd() {
+          wasmSIMDAPI.mat4_determinant_simd(stateSIMD.cArrayPointerA);
+        },
+        wasm_auto_simd() {
+          wasmSIMDAPI.mat4_determinant(stateSIMD.cArrayPointerA);
+        },
+        threejs() {
+          m4JSA.determinant();
+        },
+      },
+      1000000,
+    );
+
+    const loopCount = 1_000_000;
+    benchmark(
+      {
+        wasm() {
+          wasmSIMDAPI.test(5, loopCount);
+        },
+        wasm_simd() {
+          wasmSIMDAPI.test(6, loopCount);
+        },
+      },
+      1,
+      `_loop_in_wasm_${loopCount}`,
     );
   });
 }

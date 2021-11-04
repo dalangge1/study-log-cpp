@@ -57,7 +57,7 @@ export const expect = inputValue => {
 /**
  * @param {{[name: string]: () => void | Promise<void>}} obj
  */
-export const benchmark = (obj, loopCount = 100000) => {
+export const benchmark = (obj, loopCount = 100000, postfix = '') => {
   /**
    * @type {{[name: string]: number}}
    */
@@ -79,6 +79,6 @@ export const benchmark = (obj, loopCount = 100000) => {
     resultFormatted[key] = `${ms}ms (x${ratio})`;
   });
 
-  console.log(`\n${currTestName}_benchmark_${loopCount}:`);
+  console.log(`\n${currTestName}_benchmark_${loopCount}${postfix}:`);
   console.table(resultFormatted);
 };
