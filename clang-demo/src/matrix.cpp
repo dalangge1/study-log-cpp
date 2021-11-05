@@ -528,6 +528,30 @@ float mat4_determinant_simd(float const te[16]) {
   v128_t m5 = wasm_f32x4_mul(s0, m5_r);
   v128_t m6 = wasm_f32x4_mul(m6_l, m6_r);
 
+  // 更慢了
+  // v128_t m7_1 = wasm_i32x4_shuffle(m4, m6, 0, 3, 6, 0);
+  // v128_t m7_2 = wasm_i32x4_shuffle(m7_1, m5, 0, 1, 2, 6);
+  // v128_t m7_3 = wasm_f32x4_const(1, 1, -1, -1);
+  // v128_t m7 = wasm_f32x4_mul(m7_3, m7_2);
+
+  // v128_t m8_1 = wasm_i32x4_shuffle(m4, m6, 1, 4, 5, 0);
+  // v128_t m8_2 = wasm_i32x4_shuffle(m8_1, m5, 0, 1, 2, 7);
+  // v128_t m8_3 = wasm_f32x4_const(1, 1, 1, -1);
+  // v128_t m8 = wasm_f32x4_mul(m8_3, m8_2);
+
+  // v128_t m9_1 = wasm_i32x4_shuffle(m4, m6, 2, 7, 0, 0);
+  // v128_t m9_2 = wasm_i32x4_shuffle(m9_1, m5, 0, 4, 5, 1);
+  // v128_t m9_3 = wasm_f32x4_const(1, -1, -1, -1);
+  // v128_t m9 = wasm_f32x4_mul(m9_3, m9_2);
+
+  // v128_t m10 = wasm_f32x4_add(wasm_f32x4_add(m7, m8), m9);
+  // v128_t m11 = wasm_f32x4_mul(n4_, m10);
+
+  //  wasm_v128_store(tmpF32, m11);
+
+  // return tmpF32[0] + tmpF32[1] + tmpF32[2] + tmpF32[3];
+
+  // 部分计算还是非simd
   wasm_v128_store(tmpF32, m4);
   wasm_v128_store(tmpF32 + 4, m5);
   wasm_v128_store(tmpF32 + 8, m6);
@@ -597,6 +621,80 @@ float mat4_determinant_simd(float const te[16]) {
   //         n42 * (n11n23n13n21n34 + n14n21n11n24n33 - n14n23n13n24n31) +
   //         n43 * (-n14n21n11n24n32 + n12n21n11n22n34 - n12n24n14n22n31) +
   //         n44 * (-n13n22n12n23n31 - n11n23n13n21n32 - n12n21n11n22n33));
+}
+
+// assemblyscript时候的写法
+float mat4_determinant_simd2(float const te[16]) {
+  float n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
+  float n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
+  float n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
+  float n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+
+  v128_t l, r, m0, m1, m2, m3, m4, m5, m6, m7, s0, s1;
+
+  l = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(
+          wasm_f32x4_replace_lane(wasm_f32x4_splat(n14), 1, n12), 2, n13),
+      3, n11);
+  r = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(wasm_f32x4_splat(n23), 1, n24), 2, n22);
+  m0 = wasm_f32x4_mul(l, r);
+
+  l = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(wasm_f32x4_splat(n13), 1, n14), 2, n12);
+  r = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(
+          wasm_f32x4_replace_lane(wasm_f32x4_splat(n24), 1, n22), 2, n23),
+      3, n21);
+  m1 = wasm_f32x4_mul(l, r);
+
+  l = wasm_f32x4_replace_lane(wasm_f32x4_splat(n14), 1, n12);
+  r = wasm_f32x4_splat(n21);
+  m2 = wasm_f32x4_mul(l, r);
+
+  l = wasm_f32x4_splat(n11);
+  r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n22), 0, n24);
+  m3 = wasm_f32x4_mul(l, r);
+
+  s0 = wasm_f32x4_sub(m0, m1);
+  s1 = wasm_f32x4_sub(m2, m3);
+
+  r = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(wasm_f32x4_splat(n34), 0, n32), 1, n33);
+  m4 = wasm_f32x4_mul(s0, r);
+
+  r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n31), 3, n32);
+  m5 = wasm_f32x4_mul(s0, r);
+
+  r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n33), 1, n34);
+  m6 = wasm_f32x4_mul(s1, r);
+
+  r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n32), 1, n33);
+  m7 = wasm_f32x4_mul(s1, r);
+
+  l = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(
+          wasm_f32x4_replace_lane(wasm_f32x4_splat(n41), 1, n42), 2, n43),
+      3, n44);
+  r = wasm_f32x4_replace_lane(
+      wasm_f32x4_replace_lane(
+          wasm_f32x4_replace_lane(
+              wasm_f32x4_splat(wasm_f32x4_extract_lane(m4, 0) +
+                               wasm_f32x4_extract_lane(m4, 1) +
+                               wasm_f32x4_extract_lane(m4, 2)),
+              1,
+              wasm_f32x4_extract_lane(m4, 3) + wasm_f32x4_extract_lane(m6, 0) -
+                  wasm_f32x4_extract_lane(m5, 0)),
+          2,
+          -wasm_f32x4_extract_lane(m7, 0) + wasm_f32x4_extract_lane(m6, 1) -
+              wasm_f32x4_extract_lane(m5, 1)),
+      3,
+      -wasm_f32x4_extract_lane(m7, 1) - wasm_f32x4_extract_lane(m5, 3) -
+          wasm_f32x4_extract_lane(m5, 2));
+
+  l = wasm_f32x4_mul(l, r);
+  return wasm_f32x4_extract_lane(l, 0) + wasm_f32x4_extract_lane(l, 1) +
+         wasm_f32x4_extract_lane(l, 2) + wasm_f32x4_extract_lane(l, 3);
 }
 
 float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};

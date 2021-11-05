@@ -201,6 +201,9 @@ export async function matrix() {
         wasm_hand_simd() {
           wasmSIMDAPI.mat4_determinant_simd(stateSIMD.cArrayPointerA);
         },
+        wasm_hand_simd2() {
+          wasmSIMDAPI.mat4_determinant_simd2(stateSIMD.cArrayPointerA);
+        },
         wasm_auto_simd() {
           wasmSIMDAPI.mat4_determinant(stateSIMD.cArrayPointerA);
         },

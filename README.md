@@ -2,6 +2,16 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-5
+
+0. 开了-msimd128 确实会自动把部分指令改为 simd,但是貌似带来提升体现不高
+1. 迁移了 assemblyscript时候的写版本, 性能和js差不多1000000 loop
+2. 比较奇怪是火狐打开devtools wasm耗时剧增, chrome也有类似的情况, 等结果输出完毕后再打开dev tools
+
+https://emcc.zcopy.site/docs/porting/simd/
+
+> Emscripten supports the WebAssembly SIMD proposal when using the WebAssembly LLVM backend. To enable SIMD, pass the -msimd128 flag at compile time. This will also turn on LLVM’s **autovectorization** passes, so no source modifications are necessary to benefit from SIMD.
+
 ## 2021-11-4
 
 0. 有点小奇怪, loop in js 确实 glm 直接存储 v128 的方式快 2ms, 但是 loop in wasm 却不是最快的, 慢了 6ms
