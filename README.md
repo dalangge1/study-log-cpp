@@ -2,11 +2,16 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-8
+
+0. 增加网页 log, 确认开 devtools, 对测试结果很有影响, 尤其是火狐, 关闭 devtools 时, 参考 glm 的实现最快的, 比 js 确实快了 4 倍, 并且 simd 的优势也体现出来了
+1. 阅读 glm determinant 实现调整顺序
+
 ## 2021-11-5
 
 0. 开了-msimd128 确实会自动把部分指令改为 simd,但是貌似带来提升体现不高
-1. 迁移了 assemblyscript时候的写版本, 性能和js差不多1000000 loop
-2. 比较奇怪是火狐打开devtools wasm耗时剧增, chrome也有类似的情况, 等结果输出完毕后再打开dev tools
+1. 迁移了 assemblyscript 时候的写版本, 性能和 js 差不多 1000000 loop
+2. 比较奇怪是火狐打开 devtools wasm 耗时剧增, chrome 也有类似的情况, 等结果输出完毕后再打开 dev tools
 
 https://emcc.zcopy.site/docs/porting/simd/
 

@@ -91,6 +91,60 @@ float mat4_determinant(float const te[16]) {
           n44 * (-n13n22n12n23n31 - n11n23n13n21n32 - n12n21n11n22n33));
 }
 
+// 看了glm版本,理顺了最后面的部分
+float mat4_determinant2(float const te[16]) {
+  float n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
+  float n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
+  float n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
+  float n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+
+  // 复用部分乘法结果
+  // // m0
+  // const n14n23 = n14 * n23;
+  // const n12n24 = n12 * n24;
+  // const n13n22 = n13 * n22;
+  // const n11n23 = n11 * n23;
+  // // m1
+  // const n13n24 = n13 * n24;
+  // const n14n22 = n14 * n22;
+  // const n12n23 = n12 * n23;
+  // const n13n21 = n13 * n21;
+  // // m2
+  // const n14n21 = n14 * n21;
+  // const n12n21 = n12 * n21;
+  // // m3
+  // const n11n24 = n11 * n24;
+  // const n11n22 = n11 * n22;
+  // s1
+  float n14n23n13n24 = n14 * n23 - n13 * n24;
+  float n14n21n11n24 = n14 * n21 - n11 * n24;
+  float n12n21n11n22 = n12 * n21 - n11 * n22;
+  float n13n22n12n23 = n12 * n23 - n13 * n22;
+  // s1
+  float n11n23n13n21 = n13 * n21 - n11 * n23;
+  float n12n24n14n22 = n12 * n24 - n14 * n22;
+
+  float n14n23n13n24n32 = n14n23n13n24 * n32;
+  float n14n23n13n24n31 = n14n23n13n24 * n31;
+  float n14n21n11n24n33 = n14n21n11n24 * n33;
+  float n14n21n11n24n32 = n14n21n11n24 * n32;
+
+  float n12n24n14n22n31 = n12n24n14n22 * n31;
+  float n12n24n14n22n33 = n12n24n14n22 * n33;
+  float n13n22n12n23n34 = n13n22n12n23 * n34;
+  float n13n22n12n23n31 = n13n22n12n23 * n31;
+
+  float n11n23n13n21n34 = n11n23n13n21 * n34;
+  float n11n23n13n21n32 = n11n23n13n21 * n32;
+  float n12n21n11n22n34 = n12n21n11n22 * n34;
+  float n12n21n11n22n33 = n12n21n11n22 * n33;
+
+  return (n41 * (n14n23n13n24n32 + n12n24n14n22n33 - n13n22n12n23n34) +
+          n42 * (-n14n23n13n24n31 + n14n21n11n24n33 - n11n23n13n21n34) +
+          n43 * (-n14n21n11n24n32 + n12n21n11n22n34 - n12n24n14n22n31) +
+          n44 * (n11n23n13n21n32 + n13n22n12n23n31 - n12n21n11n22n33));
+}
+
 #ifdef __SIMD__
 float tmpF32[16];
 

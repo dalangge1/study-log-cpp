@@ -1,6 +1,12 @@
 <!DOCTYPE html>
+<style>
+  * {
+    font-size: small;
+  }
+</style>
 <script src="./libs/gl_matrix_wasm.js"></script>
 <script type="module">
+  import './libs/console.js';
   import { simd } from './simd.js';
   import { add } from './add.js';
   import { matrix } from './matrix.js';
@@ -10,6 +16,8 @@
 
   const params = new URLSearchParams(location.search);
   const specific = params.get('spec');
+
+  console.log('请关闭dev tools测试, 否则结果差异较大, 尤其在火狐里');
 
   async function main() {
     if (specific) {
