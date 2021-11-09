@@ -2,6 +2,12 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-9
+
+0. 按照 glm 调整了顺序, 但是性能更差了些...很奇怪了
+1. 增加了 make/shuffle/replace_lane 性能测试, 貌似没有明显的性能差别...determinant 为什么会比 wasm 慢呢...
+2. wasm_i32_shuffle 最终编译为还是 i8x16.shuffle, wasm simd 规范找到的也只有这个, 发现有一段shuffle特别耗时 matrix.cpp:875
+
 ## 2021-11-8
 
 0. 增加网页 log, 确认开 devtools, 对测试结果很有影响, 尤其是火狐, 关闭 devtools 时, 参考 glm 的实现最快的, 比 js 确实快了 4 倍, 并且 simd 的优势也体现出来了

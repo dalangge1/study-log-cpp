@@ -117,4 +117,20 @@ export async function simd() {
   test('v32x4_shuffle', () => {
     expect(wasmSIMDAPI.test_f32x4_shuffle(1, 2, 3, 4)).toBe(10);
   });
+  test('benchmark', () => {
+    benchmark(
+      {
+        make() {
+          wasmSIMDAPI.test_v128_load_by_make(1, 2, 3, 4);
+        },
+        load() {
+          wasmSIMDAPI.test_v128_load(1, 2, 3, 4);
+        },
+        shuffle() {
+          wasmSIMDAPI.test_v128_load_by_shuffle(1, 2, 3, 4);
+        },
+      },
+      1000_000,
+    );
+  });
 }

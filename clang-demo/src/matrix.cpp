@@ -98,23 +98,6 @@ float mat4_determinant2(float const te[16]) {
   float n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
   float n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
 
-  // 复用部分乘法结果
-  // // m0
-  // const n14n23 = n14 * n23;
-  // const n12n24 = n12 * n24;
-  // const n13n22 = n13 * n22;
-  // const n11n23 = n11 * n23;
-  // // m1
-  // const n13n24 = n13 * n24;
-  // const n14n22 = n14 * n22;
-  // const n12n23 = n12 * n23;
-  // const n13n21 = n13 * n21;
-  // // m2
-  // const n14n21 = n14 * n21;
-  // const n12n21 = n12 * n21;
-  // // m3
-  // const n11n24 = n11 * n24;
-  // const n11n22 = n11 * n22;
   // s1
   float n14n23n13n24 = n14 * n23 - n13 * n24;
   float n14n21n11n24 = n14 * n21 - n11 * n24;
@@ -125,19 +108,19 @@ float mat4_determinant2(float const te[16]) {
   float n12n24n14n22 = n12 * n24 - n14 * n22;
 
   float n14n23n13n24n32 = n14n23n13n24 * n32;
+  float n14n21n11n24n32 = n14n21n11n24 * n32;
+  float n12n21n11n22n34 = n12n21n11n22 * n34;
+  float n13n22n12n23n34 = n13n22n12n23 * n34;
+
   float n14n23n13n24n31 = n14n23n13n24 * n31;
   float n14n21n11n24n33 = n14n21n11n24 * n33;
-  float n14n21n11n24n32 = n14n21n11n24 * n32;
-
-  float n12n24n14n22n31 = n12n24n14n22 * n31;
-  float n12n24n14n22n33 = n12n24n14n22 * n33;
-  float n13n22n12n23n34 = n13n22n12n23 * n34;
+  float n12n21n11n22n33 = n12n21n11n22 * n33;
   float n13n22n12n23n31 = n13n22n12n23 * n31;
 
   float n11n23n13n21n34 = n11n23n13n21 * n34;
   float n11n23n13n21n32 = n11n23n13n21 * n32;
-  float n12n21n11n22n34 = n12n21n11n22 * n34;
-  float n12n21n11n22n33 = n12n21n11n22 * n33;
+  float n12n24n14n22n31 = n12n24n14n22 * n31;
+  float n12n24n14n22n33 = n12n24n14n22 * n33;
 
   return (n41 * (n14n23n13n24n32 + n12n24n14n22n33 - n13n22n12n23n34) +
           n42 * (-n14n23n13n24n31 + n14n21n11n24n33 - n11n23n13n21n34) +
@@ -751,6 +734,218 @@ float mat4_determinant_simd2(float const te[16]) {
          wasm_f32x4_extract_lane(l, 2) + wasm_f32x4_extract_lane(l, 3);
 }
 
+// 看了glm版本,理顺了最后面的部分
+v128_t tmp_f32x4_const = wasm_f32x4_const(1, -1, -1, 1);
+v128_t tmp_f32x4_make = wasm_f32x4_make(1, -1, -1, 1);
+float mat4_determinant_simd3(float const te[16]) {
+  // 7ms
+  //   return te[0];
+  v128_t n_1 = wasm_v128_load(te);
+  v128_t n_2 = wasm_v128_load(te + 4);
+  v128_t n_3 = wasm_v128_load(te + 8);
+  v128_t n_4 = wasm_v128_load(te + 12);
+
+  // 7.8ms
+  //   return wasm_f32x4_extract_lane(n_1, 0) + wasm_f32x4_extract_lane(n_3, 0)
+  //   +
+  //          wasm_f32x4_extract_lane(n_2, 0) + wasm_f32x4_extract_lane(n_4, 0);
+
+  v128_t s1_sl_l = wasm_i32x4_shuffle(n_2, n_4, 4, 4, 0, 0);
+  v128_t s1_sl_r = wasm_i32x4_shuffle(n_1, n_3, 5, 1, 1, 5);
+  v128_t s1_sr_l = wasm_i32x4_shuffle(n_1, n_3, 4, 0, 0, 4);
+  v128_t s1_sr_r = wasm_i32x4_shuffle(n_2, n_4, 5, 5, 1, 1);
+
+  v128_t s1 = wasm_f32x4_sub(wasm_f32x4_mul(s1_sl_l, s1_sl_r),
+                             wasm_f32x4_mul(s1_sr_l, s1_sr_r));
+
+  // 8.3ms
+  //   return wasm_f32x4_extract_lane(s1, 0);
+
+  v128_t s2_sl_l = wasm_i32x4_shuffle(n_2, n_3, 4, 0, 0, 0);
+  v128_t s2_sl_r = wasm_i32x4_shuffle(n_1, n_4, 5, 1, 0, 0);
+  v128_t s2_sr_l = wasm_i32x4_shuffle(n_1, n_4, 4, 0, 0, 0);
+  v128_t s2_sr_r = wasm_i32x4_shuffle(n_2, n_3, 5, 1, 0, 0);
+
+  v128_t s2 = wasm_f32x4_sub(wasm_f32x4_mul(s2_sl_l, s2_sl_r),
+                             wasm_f32x4_mul(s2_sr_l, s2_sr_r));
+
+  // 10.3ms
+  //   return wasm_f32x4_extract_lane(s2, 0) + wasm_f32x4_extract_lane(s1, 0);
+
+  v128_t m1 = wasm_f32x4_mul(s1, wasm_i32x4_shuffle(n_2, n_4, 2, 2, 6, 6));
+  v128_t m2 = wasm_f32x4_mul(s1, wasm_i32x4_shuffle(n_1, n_3, 2, 2, 6, 6));
+  // TODO: 封装成宏
+  v128_t m3_r = wasm_i32x4_shuffle(
+      wasm_i32x4_shuffle(wasm_i32x4_shuffle(n_4, n_2, 2, 6, 0, 0), n_3, 0, 1, 6,
+                         0),
+      n_1, 0, 1, 2, 6);
+  //   v128_t m3_r = wasm_f32x4_make(te[14], te[6], te[2], te[10]);
+  v128_t m3 = wasm_f32x4_mul(wasm_i32x4_shuffle(s2, s2, 0, 0, 1, 1), m3_r);
+
+  // 12ms
+  //   return wasm_f32x4_extract_lane(m1, 0) + wasm_f32x4_extract_lane(m3, 0) +
+  //          wasm_f32x4_extract_lane(m2, 0);
+
+  // 都慢,需要好好测试下wasm_i32x4_shuffle的性能了...,感觉可能还不如make的方式
+  //   wasm_v128_store(tmpF32, m1);
+  //   wasm_v128_store(tmpF32 + 4, m2);
+  //   wasm_v128_store(tmpF32 + 8, m3);
+
+  //   v128_t m8_r = wasm_f32x4_make(
+  //       tmpF32[0] + tmpF32[1] + tmpF32[2], tmpF32[3] + tmpF32[8] - tmpF32[4],
+  //       -tmpF32[10] + tmpF32[9] - tmpF32[5], -tmpF32[6] - tmpF32[7] -
+  //       tmpF32[11]);
+  //   v128_t n4_ = wasm_f32x4_make(te[3], te[7], te[11], te[15]);
+  //   v128_t m8 = wasm_f32x4_mul(n4_, m8_r);
+
+  //   // 怎么方便一个向量求和呢
+  //   wasm_v128_store(tmpF32, m8);
+
+  //   return tmpF32[0] + tmpF32[1] + tmpF32[2] + tmpF32[3];
+
+  v128_t a1 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 0, 4, 1, 0), m3, 0,
+                                 1, 2, 5);
+  v128_t a2 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 0, 5, 2, 7), m3, 7,
+                                 1, 2, 3);
+  v128_t a3 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 3, 0, 0, 6), m3, 0,
+                                 4, 6, 3);
+  v128_t m4_r = wasm_f32x4_sub(
+      wasm_f32x4_add(wasm_f32x4_mul(a1, tmp_f32x4_const), a2), a3);
+  v128_t m4_l = wasm_i32x4_shuffle(
+      wasm_i32x4_shuffle(wasm_i32x4_shuffle(n_1, n_2, 3, 7, 0, 0), n_3, 0, 1, 7,
+                         0),
+      n_4, 0, 1, 2, 7);
+  v128_t m4 = wasm_f32x4_mul(m4_r, m4_l);
+  v128_t m4_1 = wasm_i32x4_shuffle(m4, m4, 0, 0, 0, 0);
+  v128_t m4_2 = wasm_i32x4_shuffle(m4, m4, 1, 1, 1, 1);
+  v128_t m4_3 = wasm_i32x4_shuffle(m4, m4, 2, 2, 2, 2);
+  v128_t m4_4 = wasm_i32x4_shuffle(m4, m4, 3, 3, 3, 3);
+  v128_t a4 =
+      wasm_f32x4_add(wasm_f32x4_add(wasm_f32x4_add(m4_1, m4_2), m4_3), m4_4);
+
+  return wasm_f32x4_extract_lane(a4, 0);
+}
+
+float mat4_determinant_simd4(float const te[16]) {
+  float n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
+  float n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
+  float n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
+  float n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+
+  v128_t s1_sl_l = wasm_f32x4_make(n14, n14, n12, n12);
+  v128_t s1_sl_r = wasm_f32x4_make(n23, n21, n21, n23);
+  v128_t s1_sr_l = wasm_f32x4_make(n13, n11, n11, n13);
+  v128_t s1_sr_r = wasm_f32x4_make(n24, n24, n22, n22);
+
+  v128_t s1 = wasm_f32x4_sub(wasm_f32x4_mul(s1_sl_l, s1_sl_r),
+                             wasm_f32x4_mul(s1_sr_l, s1_sr_r));
+
+  // 7.8ms
+  //   return wasm_f32x4_extract_lane(s1, 0);
+
+  v128_t s2_sl_l = wasm_f32x4_replace_lane(wasm_f32x4_splat(n13), 1, n12);
+  v128_t s2_sl_r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n21), 1, n24);
+  v128_t s2_sr_l = wasm_f32x4_replace_lane(wasm_f32x4_splat(n11), 1, n14);
+  v128_t s2_sr_r = wasm_f32x4_replace_lane(wasm_f32x4_splat(n23), 1, n22);
+
+  v128_t s2 = wasm_f32x4_sub(wasm_f32x4_mul(s2_sl_l, s2_sl_r),
+                             wasm_f32x4_mul(s2_sr_l, s2_sr_r));
+
+  // 8.1ms
+  //   return wasm_f32x4_extract_lane(s2, 0) + wasm_f32x4_extract_lane(s1, 0);
+
+  v128_t m1 = wasm_f32x4_mul(s1, wasm_f32x4_make(n32, n32, n34, n34));
+  v128_t m2 = wasm_f32x4_mul(s1, wasm_f32x4_make(n31, n33, n33, n31));
+  v128_t m3 = wasm_f32x4_mul(wasm_i32x4_shuffle(s2, s2, 0, 0, 1, 1),
+                             wasm_f32x4_make(n34, n32, n31, n33));
+
+  // 10.3ms
+  // return wasm_f32x4_extract_lane(m1, 0) + wasm_f32x4_extract_lane(m3, 0) +
+  //        wasm_f32x4_extract_lane(m2, 0);
+
+  //   v128_t a1 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 0, 4, 1, 0),
+  //   m3, 0,
+  //                                  1, 2, 5);
+  //   v128_t a2 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 0, 5, 2, 7),
+  //   m3, 7,
+  //                                  1, 2, 3);
+  //   v128_t a3 = wasm_i32x4_shuffle(wasm_i32x4_shuffle(m1, m2, 3, 0, 0, 6),
+  //   m3, 0,
+  //                                  4, 6, 3);
+
+  //   // 15ms 这三个耗时巨大...5ms
+  // return wasm_f32x4_extract_lane(a1, 0) + wasm_f32x4_extract_lane(a3, 0) +
+  //        wasm_f32x4_extract_lane(a2, 0);
+
+  v128_t a1 = wasm_f32x4_make(
+      wasm_f32x4_extract_lane(m1, 0), wasm_f32x4_extract_lane(m2, 0),
+      wasm_f32x4_extract_lane(m1, 1), wasm_f32x4_extract_lane(m3, 1));
+  v128_t a2 = wasm_f32x4_make(
+      wasm_f32x4_extract_lane(m3, 3), wasm_f32x4_extract_lane(m2, 1),
+      wasm_f32x4_extract_lane(m1, 2), wasm_f32x4_extract_lane(m2, 3));
+  v128_t a3 = wasm_f32x4_make(
+      wasm_f32x4_extract_lane(m1, 3), wasm_f32x4_extract_lane(m3, 0),
+      wasm_f32x4_extract_lane(m3, 2), wasm_f32x4_extract_lane(m2, 2));
+
+  // 10.7ms
+  // return wasm_f32x4_extract_lane(a1, 0) + wasm_f32x4_extract_lane(a3, 0) +
+  //        wasm_f32x4_extract_lane(a2, 0);
+
+  v128_t m4_r = wasm_f32x4_sub(
+      wasm_f32x4_add(wasm_f32x4_mul(a1, tmp_f32x4_const), a2), a3);
+
+  //   v128_t m4_r =
+  //       wasm_f32x4_add(wasm_f32x4_add(wasm_f32x4_mul(a1, tmp_f32x4_const),
+  //       a2),
+  //                      wasm_f32x4_mul(a3, wasm_f32x4_splat(-1)));
+
+  //   v128_t m4_r = wasm_f32x4_mul(a1, a2);
+
+  // 20ms 这耗时也太诡异了
+  //   return wasm_f32x4_extract_lane(m4_r, 0) + wasm_f32x4_extract_lane(m4_r,
+  //   1) +
+  //          wasm_f32x4_extract_lane(m4_r, 2) + wasm_f32x4_extract_lane(m4_r,
+  //          3);
+
+  //   return wasm_f32x4_extract_lane(m4_r, 0);
+
+  v128_t m4 = wasm_f32x4_mul(m4_r, wasm_f32x4_make(n41, n42, n43, n44));
+
+  // 23ms
+  //   return wasm_f32x4_extract_lane(m4, 0) + wasm_f32x4_extract_lane(m4, 1) +
+  //          wasm_f32x4_extract_lane(m4, 2) + wasm_f32x4_extract_lane(m4, 3);
+
+  // 12ms
+  //   return wasm_f32x4_extract_lane(m4, 0);
+
+  //   v128_t m4_1 = wasm_f32x4_splat(wasm_f32x4_extract_lane(m4, 0));
+  //   v128_t m4_2 = wasm_f32x4_splat(wasm_f32x4_extract_lane(m4, 1));
+  //   v128_t m4_3 = wasm_f32x4_splat(wasm_f32x4_extract_lane(m4, 2));
+  //   v128_t m4_4 = wasm_f32x4_splat(wasm_f32x4_extract_lane(m4, 3));
+  //   v128_t a4 =
+  //       wasm_f32x4_add(wasm_f32x4_add(wasm_f32x4_add(m4_1, m4_2), m4_3),
+  //       m4_4);
+
+  //   return wasm_f32x4_extract_lane(a4, 3);
+
+  wasm_v128_store(tmpF32, m4);
+
+  // 22.6
+  return tmpF32[0] + tmpF32[1] + tmpF32[2] + tmpF32[3];
+  // 20ms
+  return tmpF32[0] + tmpF32[1];
+
+  // v128_t m4_1 = wasm_i32x4_shuffle(m4, m4, 0, 0, 0, 0);
+  // v128_t m4_2 = wasm_i32x4_shuffle(m4, m4, 1, 1, 1, 1);
+  // v128_t m4_3 = wasm_i32x4_shuffle(m4, m4, 2, 2, 2, 2);
+  // v128_t m4_4 = wasm_i32x4_shuffle(m4, m4, 3, 3, 3, 3);
+  // v128_t a4 =
+  //     wasm_f32x4_add(wasm_f32x4_add(wasm_f32x4_add(m4_1, m4_2), m4_3),
+  //     m4_4);
+
+  // return wasm_f32x4_extract_lane(a4, 0);
+}
+
 float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
 float m2[16] = {1, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 1};
 float m3[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
@@ -813,7 +1008,8 @@ void test(int type, int loop) {
       tmp1Ptr = m1Ptr;
       m1Ptr = m2Ptr;
       m2Ptr = tmp1Ptr;
-      mat4_determinant(m1Ptr);
+      // 这为什么不耗时
+      mat4_determinant(m1);
     }
   if (type == 6)
     for (i = 0; i < loop; i++) {
@@ -821,6 +1017,13 @@ void test(int type, int loop) {
       m1Ptr = m2Ptr;
       m2Ptr = tmp1Ptr;
       mat4_determinant_simd(m1Ptr);
+    }
+  if (type == 7)
+    for (i = 0; i < loop; i++) {
+      tmp1Ptr = m1Ptr;
+      m1Ptr = m2Ptr;
+      m2Ptr = tmp1Ptr;
+      mat4_determinant_simd2(m1Ptr);
     }
 }
 

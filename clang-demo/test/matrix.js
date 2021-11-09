@@ -198,11 +198,21 @@ export async function matrix() {
         wasm() {
           wasmAPI.mat4_determinant(state.cArrayPointerA);
         },
+        wasm2() {
+          wasmAPI.mat4_determinant2(state.cArrayPointerA);
+        },
         wasm_hand_simd() {
           wasmSIMDAPI.mat4_determinant_simd(stateSIMD.cArrayPointerA);
         },
         wasm_hand_simd2() {
           wasmSIMDAPI.mat4_determinant_simd2(stateSIMD.cArrayPointerA);
+        },
+        wasm_hand_simd3() {
+          // 更慢了...
+          wasmSIMDAPI.mat4_determinant_simd3(stateSIMD.cArrayPointerA);
+        },
+        wasm_hand_simd4() {
+          wasmSIMDAPI.mat4_determinant_simd4(stateSIMD.cArrayPointerA);
         },
         wasm_auto_simd() {
           wasmSIMDAPI.mat4_determinant(stateSIMD.cArrayPointerA);
@@ -222,6 +232,9 @@ export async function matrix() {
         },
         wasm_simd() {
           wasmSIMDAPI.test(6, loopCount);
+        },
+        wasm_simd2() {
+          wasmSIMDAPI.test(7, loopCount);
         },
       },
       1,

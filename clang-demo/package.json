@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "http-server -o",
+    "dev": "http-server",
     "b:add": "zx scripts/build.mjs -i add.cpp",
     "b:addc": "zx scripts/build.mjs -i addc.c",
     "b:simd": "zx scripts/build.mjs -i simd.cpp -m malloc.cpp",
