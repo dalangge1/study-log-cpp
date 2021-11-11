@@ -91,7 +91,7 @@ float mat4_determinant(float const te[16]) {
           n44 * (-n13n22n12n23n31 - n11n23n13n21n32 - n12n21n11n22n33));
 }
 
-// 看了glm版本,理顺了最后面的部分
+// 看了glm版本,理顺了最后面的部分, 不过glm最后是点乘
 float mat4_determinant2(float const te[16]) {
   float n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
   float n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
@@ -126,6 +126,76 @@ float mat4_determinant2(float const te[16]) {
           n42 * (-n14n23n13n24n31 + n14n21n11n24n33 - n11n23n13n21n34) +
           n43 * (-n14n21n11n24n32 + n12n21n11n22n34 - n12n24n14n22n31) +
           n44 * (n11n23n13n21n32 + n13n22n12n23n31 - n12n21n11n22n33));
+}
+
+// 这个版本非常利于simd的设置f32x4数据, 不过需要额外乘1个系数f32x4 改变符号
+// clang-format off
+float mat4_invert_det(float const te[16]) {
+  float n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4],
+        n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9],
+        n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14],
+        n44 = te[15],
+
+        t11 =   (n34 * n23 - n33 * n24) * n42 - (n34 * n22 - n32 * n24) * n43 + (n33 * n22 - n32 * n23) * n44,
+        t12 =   (n14 * n33 - n13 * n34) * n42 - (n14 * n32 - n12 * n34) * n43 + (n13 * n32 - n12 * n33) * n44,
+        t13 = -((n14 * n23 - n13 * n24) * n42 - (n14 * n22 - n12 * n24) * n43 + (n13 * n22 - n12 * n23) * n44),
+        t14 =   (n14 * n23 - n13 * n24) * n32 - (n14 * n22 - n12 * n24) * n33 + (n13 * n22 - n12 * n23) * n34;
+
+  return n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+}
+// clang-format on
+
+float mat4_det_glmatrix(float const te[16]) {
+  float a00 = te[0], a10 = te[1], a20 = te[2], a30 = te[3], a01 = te[4],
+        a11 = te[5], a21 = te[6], a31 = te[7], a02 = te[8], a12 = te[9],
+        a22 = te[10], a32 = te[11], a03 = te[12], a13 = te[13], a23 = te[14],
+        a33 = te[15];
+
+  float b00 = a00 * a11 - a01 * a10;
+  float b01 = a00 * a12 - a02 * a10;
+  float b02 = a00 * a13 - a03 * a10;
+  float b03 = a01 * a12 - a02 * a11;
+  float b04 = a01 * a13 - a03 * a11;
+  float b05 = a02 * a13 - a03 * a12;
+  float b06 = a20 * a31 - a21 * a30;
+  float b07 = a20 * a32 - a22 * a30;
+  float b08 = a20 * a33 - a23 * a30;
+  float b09 = a21 * a32 - a22 * a31;
+  float b10 = a21 * a33 - a23 * a31;
+  float b11 = a22 * a33 - a23 * a32;
+
+  // Calculate the determinant
+  return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+}
+
+float mat4_determinant_babylon(float const m[16]) {
+  float m00 = m[0], m01 = m[1], m02 = m[2], m03 = m[3];
+  float m10 = m[4], m11 = m[5], m12 = m[6], m13 = m[7];
+  float m20 = m[8], m21 = m[9], m22 = m[10], m23 = m[11];
+  float m30 = m[12], m31 = m[13], m32 = m[14], m33 = m[15];
+  // https://en.wikipedia.org/wiki/Laplace_expansion
+  // to compute the deterrminant of a 4x4 Matrix we compute the cofactors of any
+  // row or column, then we multiply each Cofactor by its corresponding matrix
+  // value and sum them all to get the determinant Cofactor(i, j) = sign(i,j) *
+  // det(Minor(i, j)) where
+  //  - sign(i,j) = (i+j) % 2 === 0 ? 1 : -1
+  //  - Minor(i, j) is the 3x3 matrix we get by removing row i and column j from
+  //  current Matrix
+  //
+  // Here we do that for the 1st row.
+
+  float det_22_33 = m22 * m33 - m32 * m23;
+  float det_21_33 = m21 * m33 - m31 * m23;
+  float det_21_32 = m21 * m32 - m31 * m22;
+  float det_20_33 = m20 * m33 - m30 * m23;
+  float det_20_32 = m20 * m32 - m22 * m30;
+  float det_20_31 = m20 * m31 - m30 * m21;
+  float cofact_00 = +(m11 * det_22_33 - m12 * det_21_33 + m13 * det_21_32);
+  float cofact_01 = -(m10 * det_22_33 - m12 * det_20_33 + m13 * det_20_32);
+  float cofact_02 = +(m10 * det_21_33 - m11 * det_20_33 + m13 * det_20_31);
+  float cofact_03 = -(m10 * det_21_32 - m11 * det_20_32 + m12 * det_20_31);
+  return (m00 * cofact_00 + m01 * cofact_01 + m02 * cofact_02 +
+          m03 * cofact_03);
 }
 
 #ifdef __SIMD__
@@ -946,6 +1016,70 @@ float mat4_determinant_simd4(float const te[16]) {
   // return wasm_f32x4_extract_lane(a4, 0);
 }
 
+v128_t const tmp_f32x4_const1 = wasm_f32x4_const(1, 1, -1, 1);
+float mat4_determinant_simd5(float const te[16]) {
+  // clang-format off
+  float n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4],
+        n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9],
+        n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14],
+        n44 = te[15],
+        //      l1     r1    l2    r2     m1     l1    r3    l3    r2     m2    l2     r3    l3    l1     m3
+        t11 =   (n34 * n23 - n33 * n24) * n42 - (n34 * n22 - n32 * n24) * n43 + (n33 * n22 - n32 * n23) * n44,
+        t12 =   (n14 * n33 - n13 * n34) * n42 - (n14 * n32 - n12 * n34) * n43 + (n13 * n32 - n12 * n33) * n44,
+        t13 = -((n14 * n23 - n13 * n24) * n42 - (n14 * n22 - n12 * n24) * n43 + (n13 * n22 - n12 * n23) * n44),
+        t14 =   (n14 * n23 - n13 * n24) * n32 - (n14 * n22 - n12 * n24) * n33 + (n13 * n22 - n12 * n23) * n34;
+
+  float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+  // clang-format on
+
+  v128_t n_1 = wasm_v128_load(te);
+  //   v128_t l1, l2, l3, r1, r2, r3, m1, m2, m3, s1, s2, s3, t1_;
+  v128_t l1, l2, l3, r1, r2, r3, m, s1, s2, s3, t1_;
+
+  l1 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n14), 0, n34);
+  l2 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n13), 0, n33);
+  l3 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n12), 0, n32);
+  r1 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n23), 1, n33);
+  r2 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n24), 1, n34);
+  r3 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n22), 1, n32);
+  //   m1 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n42), 3, n32);
+  //   m2 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n43), 3, n33);
+  //   m3 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n44), 3, n34);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n42), 3, n32);
+  s1 = wasm_f32x4_mul(l1, r1);
+  s1 = wasm_f32x4_sub(s1, wasm_f32x4_mul(l2, r2));
+  s1 = wasm_f32x4_mul(s1, m);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n43), 3, n33);
+  s2 = wasm_f32x4_mul(l1, r3);
+  s2 = wasm_f32x4_sub(s2, wasm_f32x4_mul(l3, r2));
+  s2 = wasm_f32x4_mul(s2, m);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n44), 3, n34);
+  s3 = wasm_f32x4_mul(l2, r3);
+  s3 = wasm_f32x4_sub(s3, wasm_f32x4_mul(l3, r1));
+  s3 = wasm_f32x4_mul(s3, m);
+
+  t1_ = wasm_f32x4_mul(wasm_f32x4_add(wasm_f32x4_sub(s1, s2), s3),
+                       tmp_f32x4_const1);
+
+  // dot from glm
+  v128_t mul0 = wasm_f32x4_mul(n_1, t1_);
+
+  // 貌似没明显性能差距
+  // return wasm_f32x4_extract_lane(mul0, 0) + wasm_f32x4_extract_lane(mul0, 1)
+  // +
+  //        wasm_f32x4_extract_lane(mul0, 2) + wasm_f32x4_extract_lane(mul0, 3);
+
+  v128_t swp0 = wasm_i32x4_shuffle(mul0, mul0, 3, 2, 1, 0);
+  v128_t add0 = wasm_f32x4_add(mul0, swp0);  // 0, 1, 2, 3
+  v128_t swp1 = wasm_i32x4_shuffle(add0, add0, 1, 0, 3, 2);
+  v128_t add1 = wasm_f32x4_add(add0, swp1);  // 0, 1, 2, 3
+
+  return wasm_f32x4_extract_lane(add1, 0);
+}
+
 float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
 float m2[16] = {1, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 1};
 float m3[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
@@ -1008,22 +1142,29 @@ void test(int type, int loop) {
       tmp1Ptr = m1Ptr;
       m1Ptr = m2Ptr;
       m2Ptr = tmp1Ptr;
-      // 这为什么不耗时
-      mat4_determinant(m1);
+      // 这为什么不耗时; 现在耗时正常了, 基本吻合loop in js的差距
+      m1Ptr[0] = mat4_determinant(m1);
     }
   if (type == 6)
     for (i = 0; i < loop; i++) {
       tmp1Ptr = m1Ptr;
       m1Ptr = m2Ptr;
       m2Ptr = tmp1Ptr;
-      mat4_determinant_simd(m1Ptr);
+      m1Ptr[0] = mat4_determinant_simd(m1Ptr);
     }
   if (type == 7)
     for (i = 0; i < loop; i++) {
       tmp1Ptr = m1Ptr;
       m1Ptr = m2Ptr;
       m2Ptr = tmp1Ptr;
-      mat4_determinant_simd2(m1Ptr);
+      m1Ptr[0] = mat4_determinant_simd2(m1Ptr);
+    }
+  if (type == 8)
+    for (i = 0; i < loop; i++) {
+      tmp1Ptr = m1Ptr;
+      m1Ptr = m2Ptr;
+      m2Ptr = tmp1Ptr;
+      m1Ptr[0] = mat4_determinant_simd5(m1Ptr);
     }
 }
 

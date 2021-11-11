@@ -2,11 +2,82 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-11
+
+0. determinant simd 性能比 no simd 慢, 到底是什么导致的? 先了解下 determinant 吧...
+1. 额, 貌似 three.js 自己已经有了 determinant 改进算法在 invert 的函数里, 但是 determinant 方法里却不是改进版的
+2. transpose 前后的 determinant 是相同的?
+3. 终于有一版性能赶上非 simd 了, 不过只快了 1x% (有浮动)
+4. loop in wasm 耗时有能显示出来, 基本吻合 loop in js
+5. babylon.js 的 determinant 真离谱, chrome 能优化到和 wasm 相差 3ms
+6. Float32Array 有性能问题, 只有循环数量大的时候对比 array 有优势, 比如 100_0000, 循环数量少的时候则比 array 差太多...
+7. chrome 太强大了,只要有个 warmup, 触发 trubo fan 优化, 比 wasm 还强一些, 虽然有 js call 的损耗
+8. 不过一个 determinant 函数 warmup 需要 2ms, 这么多函数都 warmup 的成本就会累加起来, 貌似也不是一个可靠的解法, 数据变化的时候是否依然有这样性能? 能
+9. 可能也不需要刻意的 warmup, 数据量小, 不明显, 数据量大, 自动优化了, 不过可能提供一个人工加速自动优化的开始时机也时不错的选择, v8 都能优化比 wasm+simd 还强
+10. 改为 float32Array 不是都能有提速...乘法就性能就明显下降了
+
+https://github.com/toji/gl-matrix/issues/359
+https://github.com/akira-cn/babel-plugin-transform-gl-matrix/blob/master/README-CN.md
+
+> A determinant is a scalar number which is calculated from a matrix. This number can determine whether a set of linear equations are solvable, in other words whether the matrix can be inverted.
+
+> matrix_determinant_benchmark_1000000:
+
+| Key                            | Value            |
+| ------------------------------ | ---------------- |
+| wasm                           | 16.10ms (x1.643) |
+| wasm2                          | 16.10ms (x1.643) |
+| wasm_determinant_babylon       | 15.90ms (x1.622) |
+| mat4_invert_det                | 18.30ms (x1.867) |
+| mat4_det_glmatrix              | 16.90ms (x1.724) |
+| wasm_hand_simd                 | 16.30ms (x1.663) |
+| wasm_hand_simd2                | 31.60ms (x3.224) |
+| wasm_hand_simd3                | 19.10ms (x1.949) |
+| wasm_hand_simd4                | 22.60ms (x2.306) |
+| wasm_hand_simd5                | 11.70ms (x1.194) |
+| wasm_auto_simd                 | 14.90ms (x1.520) |
+| wasm_auto_simd2                | 14.30ms (x1.459) |
+| threejs_determinant            | 28.80ms (x2.939) |
+| threejs_determinant2           | 19.20ms (x1.959) |
+| threejs_determinant2_f32_array | 9.80ms (x1.000)  |
+| threejs_determinant3           | 18.60ms (x1.898) |
+| babylon_determinant            | 15.70ms (x1.602) |
+| babylon_determinant_f32_array  | 9.90ms (x1.010)  |
+| oasis_determinant              | 17.70ms (x1.806) |
+| oasis_determinant_f32_array    | 9.90ms (x1.010)  |
+| threejs_invert_det             | 28.70ms (x2.929) |
+
+> matrix_determinant_benchmark_10000:
+
+| Key                            | Value            |
+| ------------------------------ | ---------------- |
+| wasm                           | 0.50ms (x1.667)  |
+| wasm2                          | 0.40ms (x1.333)  |
+| wasm_determinant_babylon       | 0.40ms (x1.333)  |
+| mat4_invert_det                | 0.30ms (x1.000)  |
+| mat4_det_glmatrix              | 0.40ms (x1.333)  |
+| wasm_hand_simd                 | 0.50ms (x1.667)  |
+| wasm_hand_simd2                | 0.50ms (x1.667)  |
+| wasm_hand_simd3                | 0.40ms (x1.333)  |
+| wasm_hand_simd4                | 0.50ms (x1.667)  |
+| wasm_hand_simd5                | 0.30ms (x1.000)  |
+| wasm_auto_simd                 | 0.30ms (x1.000)  |
+| wasm_auto_simd2                | 0.40ms (x1.333)  |
+| threejs_determinant            | 1.90ms (x6.333)  |
+| threejs_determinant2           | 1.40ms (x4.667)  |
+| threejs_determinant2_f32_array | 3.10ms (x10.333) |
+| threejs_determinant3           | 1.50ms (x5.000)  |
+| babylon_determinant            | 1.50ms (x5.000)  |
+| babylon_determinant_f32_array  | 2.40ms (x8.000)  |
+| oasis_determinant              | 1.50ms (x5.000)  |
+| oasis_determinant_f32_array    | 2.50ms (x8.333)  |
+| threejs_invert_det             | 1.70ms (x5.667)  |
+
 ## 2021-11-9
 
 0. 按照 glm 调整了顺序, 但是性能更差了些...很奇怪了
 1. 增加了 make/shuffle/replace_lane 性能测试, 貌似没有明显的性能差别...determinant 为什么会比 wasm 慢呢...
-2. wasm_i32_shuffle 最终编译为还是 i8x16.shuffle, wasm simd 规范找到的也只有这个, 发现有一段shuffle特别耗时 matrix.cpp:875
+2. wasm_i32_shuffle 最终编译为还是 i8x16.shuffle, wasm simd 规范找到的也只有这个, 发现有一段 shuffle 特别耗时 matrix.cpp:875
 
 ## 2021-11-8
 
