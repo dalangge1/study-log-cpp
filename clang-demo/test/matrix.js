@@ -487,37 +487,37 @@ export async function matrix() {
           wasm2() {
             wasmAPI.mat4_determinant2(state.cArrayPointerA);
           },
-          wasm_determinant_babylon() {
-            wasmAPI.mat4_determinant_babylon(state.cArrayPointerA);
-          },
-          mat4_invert_det() {
-            wasmAPI.mat4_invert_det(state.cArrayPointerA);
-          },
-          mat4_det_glmatrix() {
-            wasmAPI.mat4_det_glmatrix(state.cArrayPointerA);
-          },
-          wasm_hand_simd() {
-            wasmSIMDAPI.mat4_determinant_simd(stateSIMD.cArrayPointerA);
-          },
-          wasm_hand_simd2() {
-            wasmSIMDAPI.mat4_determinant_simd2(stateSIMD.cArrayPointerA);
-          },
-          wasm_hand_simd3() {
-            // 更慢了...
-            wasmSIMDAPI.mat4_determinant_simd3(stateSIMD.cArrayPointerA);
-          },
-          wasm_hand_simd4() {
-            wasmSIMDAPI.mat4_determinant_simd4(stateSIMD.cArrayPointerA);
-          },
+          // wasm_determinant_babylon() {
+          //   wasmAPI.mat4_determinant_babylon(state.cArrayPointerA);
+          // },
+          // mat4_invert_det() {
+          //   wasmAPI.mat4_invert_det(state.cArrayPointerA);
+          // },
+          // mat4_det_glmatrix() {
+          //   wasmAPI.mat4_det_glmatrix(state.cArrayPointerA);
+          // },
+          // wasm_hand_simd() {
+          //   wasmSIMDAPI.mat4_determinant_simd(stateSIMD.cArrayPointerA);
+          // },
+          // wasm_hand_simd2() {
+          //   wasmSIMDAPI.mat4_determinant_simd2(stateSIMD.cArrayPointerA);
+          // },
+          // wasm_hand_simd3() {
+          //   // 更慢了...
+          //   wasmSIMDAPI.mat4_determinant_simd3(stateSIMD.cArrayPointerA);
+          // },
+          // wasm_hand_simd4() {
+          //   wasmSIMDAPI.mat4_determinant_simd4(stateSIMD.cArrayPointerA);
+          // },
           wasm_hand_simd5() {
             wasmSIMDAPI.mat4_determinant_simd5(stateSIMD.cArrayPointerA);
           },
-          wasm_auto_simd() {
-            wasmSIMDAPI.mat4_determinant(stateSIMD.cArrayPointerA);
-          },
-          wasm_auto_simd2() {
-            wasmSIMDAPI.mat4_determinant2(stateSIMD.cArrayPointerA);
-          },
+          // wasm_auto_simd() {
+          //   wasmSIMDAPI.mat4_determinant(stateSIMD.cArrayPointerA);
+          // },
+          // wasm_auto_simd2() {
+          //   wasmSIMDAPI.mat4_determinant2(stateSIMD.cArrayPointerA);
+          // },
           threejs_determinant() {
             m4JSA.determinant();
           },
@@ -528,10 +528,10 @@ export async function matrix() {
             m4JSC.determinant2();
             m4JSC.elements[1] = i;
           },
-          threejs_determinant3(i) {
-            m4JSA.determinant3();
-            m4JSA.elements[1] = i;
-          },
+          // threejs_determinant3(i) {
+          //   m4JSA.determinant3();
+          //   m4JSA.elements[1] = i;
+          // },
           babylon_determinant() {
             babylon_determinant(m4JSA.elements);
           },
@@ -544,18 +544,19 @@ export async function matrix() {
           oasis_determinant_f32_array() {
             m4JSC.oasis_determinant();
           },
-          threejs_invert_det() {
-            invert_det(m4JSA);
-            // 和threejs_determinant没明显性能差距
-          },
+          // threejs_invert_det() {
+          //   invert_det(m4JSA);
+          //   // 和threejs_determinant没明显性能差距
+          // },
         },
         loopCount,
       );
 
-    run(10000);
-    run();
+    // run(10000);
     // run();
-    run(10000);
+    // run();
+    // run(10000);
+    run(1000000);
 
     const loopCount = 1_000_000;
     benchmark(

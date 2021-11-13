@@ -2,6 +2,12 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-12
+
+0. 测试代码有点凌乱, 版本也多, 需整理
+1. 不同场景测试结果有差距 这个仓库里的determinant性能比determinant2快上2ms https://github.com/deepkolos/matrix-f32-array-performace-issue/
+2. vscode的c++的代码提示远不如js的...估计还是看看怎么配置, 连个分号缺少都不会报错...reference也不太工作...这开发体验真的太差了(clangd还行)
+
 ## 2021-11-11
 
 0. determinant simd 性能比 no simd 慢, 到底是什么导致的? 先了解下 determinant 吧...

@@ -1019,18 +1019,23 @@ float mat4_determinant_simd4(float const te[16]) {
 v128_t const tmp_f32x4_const1 = wasm_f32x4_const(1, 1, -1, 1);
 float mat4_determinant_simd5(float const te[16]) {
   // clang-format off
+  // float n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4],
+  //       n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9],
+  //       n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14],
+  //       n44 = te[15],
+  //       //      l1     r1    l2    r2     m1     l1    r3    l3    r2     m2    l2     r3    l3    l1     m3
+  //       t11 =   (n34 * n23 - n33 * n24) * n42 - (n34 * n22 - n32 * n24) * n43 + (n33 * n22 - n32 * n23) * n44,
+  //       t12 =   (n14 * n33 - n13 * n34) * n42 - (n14 * n32 - n12 * n34) * n43 + (n13 * n32 - n12 * n33) * n44,
+  //       t13 = -((n14 * n23 - n13 * n24) * n42 - (n14 * n22 - n12 * n24) * n43 + (n13 * n22 - n12 * n23) * n44),
+  //       t14 =   (n14 * n23 - n13 * n24) * n32 - (n14 * n22 - n12 * n24) * n33 + (n13 * n22 - n12 * n23) * n34;
+
+  // float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+  // clang-format on
+
   float n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4],
         n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9],
         n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14],
-        n44 = te[15],
-        //      l1     r1    l2    r2     m1     l1    r3    l3    r2     m2    l2     r3    l3    l1     m3
-        t11 =   (n34 * n23 - n33 * n24) * n42 - (n34 * n22 - n32 * n24) * n43 + (n33 * n22 - n32 * n23) * n44,
-        t12 =   (n14 * n33 - n13 * n34) * n42 - (n14 * n32 - n12 * n34) * n43 + (n13 * n32 - n12 * n33) * n44,
-        t13 = -((n14 * n23 - n13 * n24) * n42 - (n14 * n22 - n12 * n24) * n43 + (n13 * n22 - n12 * n23) * n44),
-        t14 =   (n14 * n23 - n13 * n24) * n32 - (n14 * n22 - n12 * n24) * n33 + (n13 * n22 - n12 * n23) * n34;
-
-  float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
-  // clang-format on
+        n44 = te[15];
 
   v128_t n_1 = wasm_v128_load(te);
   //   v128_t l1, l2, l3, r1, r2, r3, m1, m2, m3, s1, s2, s3, t1_;

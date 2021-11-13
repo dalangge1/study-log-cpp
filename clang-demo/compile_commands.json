@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "D:\\DEV\\study\\study-log-cpp\\clang-demo\\src",
+    "command": "d:/Program Files/LLVM/bin/clang.exe -msimd128 -D__SIMD__=1",
+    "file": "matrix.cpp"
+  }
+]
