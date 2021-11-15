@@ -55,6 +55,8 @@ export async function matrix() {
       cArrayPointerB,
       cArrayPointerA,
       cArrayOut,
+      cArrayA,
+      cArrayB,
       jsArrayA,
       jsArrayB,
     };
@@ -576,6 +578,30 @@ export async function matrix() {
       },
       1,
       `_loop_in_wasm_${loopCount}`,
+    );
+  });
+
+  test('matrix_invert', () => {
+    const m4JSA = new Matrix4().fromArray(state.jsArrayA);
+
+    state.cArrayA.set(state.jsArrayA);
+    m4JSA.invert();
+    wasmAPI.mat4_invert(state.cArrayPointerA);
+    expect(state.cArrayA).toBe(m4JSA.elements);
+
+    benchmark(
+      {
+        wasm() {
+          wasmAPI.mat4_invert(state.cArrayPointerA);
+        },
+        wasm_simd() {
+          wasmSIMDAPI.mat4_invert_simd(stateSIMD.cArrayPointerA);
+        },
+        threejs() {
+          m4JSA.invert();
+        },
+      },
+      1000_000,
     );
   });
 }

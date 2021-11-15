@@ -198,6 +198,52 @@ float mat4_determinant_babylon(float const m[16]) {
           m03 * cofact_03);
 }
 
+// clang-format off
+void mat4_invert(float te[16]) {
+		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
+		float
+			n11 = te[ 0 ], n21 = te[ 1 ], n31 = te[ 2 ], n41 = te[ 3 ],
+			n12 = te[ 4 ], n22 = te[ 5 ], n32 = te[ 6 ], n42 = te[ 7 ],
+			n13 = te[ 8 ], n23 = te[ 9 ], n33 = te[ 10 ], n43 = te[ 11 ],
+			n14 = te[ 12 ], n24 = te[ 13 ], n34 = te[ 14 ], n44 = te[ 15 ],
+
+			t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44,
+			t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44,
+			t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44,
+			t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+
+		float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+
+		if ( det == 0 ) {
+      te[0] = te[1] = te[2] = te[3] = te[4] = te[5] = te[6] = te[7] = te[9] = te[10] = te[11] = te[12] = te[13] = te[14] = te[15] = 0;
+      return;
+    }
+
+		float detInv = 1 / det;
+
+		te[ 0 ] = t11 * detInv;
+		te[ 1 ] = ( n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44 ) * detInv;
+		te[ 2 ] = ( n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44 ) * detInv;
+		te[ 3 ] = ( n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43 ) * detInv;
+
+		te[ 4 ] = t12 * detInv;
+		te[ 5 ] = ( n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44 ) * detInv;
+		te[ 6 ] = ( n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44 ) * detInv;
+		te[ 7 ] = ( n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43 ) * detInv;
+
+		te[ 8 ] = t13 * detInv;
+		te[ 9 ] = ( n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44 ) * detInv;
+		te[ 10 ] = ( n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44 ) * detInv;
+		te[ 11 ] = ( n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43 ) * detInv;
+
+		te[ 12 ] = t14 * detInv;
+		te[ 13 ] = ( n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34 ) * detInv;
+		te[ 14 ] = ( n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34 ) * detInv;
+		te[ 15 ] = ( n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33 ) * detInv;
+
+}
+// clang-format on
+
 #ifdef __SIMD__
 float tmpF32[16];
 
@@ -1078,11 +1124,190 @@ float mat4_determinant_simd5(float const te[16]) {
   //        wasm_f32x4_extract_lane(mul0, 2) + wasm_f32x4_extract_lane(mul0, 3);
 
   v128_t swp0 = wasm_i32x4_shuffle(mul0, mul0, 3, 2, 1, 0);
-  v128_t add0 = wasm_f32x4_add(mul0, swp0);  // 0, 1, 2, 3
+  v128_t add0 = wasm_f32x4_add(mul0, swp0); // 0, 1, 2, 3
   v128_t swp1 = wasm_i32x4_shuffle(add0, add0, 1, 0, 3, 2);
-  v128_t add1 = wasm_f32x4_add(add0, swp1);  // 0, 1, 2, 3
+  v128_t add1 = wasm_f32x4_add(add0, swp1); // 0, 1, 2, 3
 
   return wasm_f32x4_extract_lane(add1, 0);
+}
+
+void mat4_invert_simd(float te[16]) {
+  // clang-format off
+  //                        c0                c0          c1    c2    c3          c2          c1    c4    c3          c4
+  // t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44,
+  // t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44,
+  // t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44,
+  // t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+
+  // te[ 0 ] = t11 * detInv;
+  // te[ 4 ] = t12 * detInv;
+  // te[ 8 ] = t13 * detInv;
+  // te[ 12 ] = t14 * detInv;
+
+  //                          c1                c1          c2    c3    c4          c3          c2    c3    c4          c3
+  //                          c1                c1          c2    c3    c4          c3          c2    c5    c4          c5
+  // te[ 1 ] =  ( n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44 ) * detInv;
+  // te[ 2 ] =  ( n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44 ) * detInv;
+  // te[ 3 ] =  ( n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43 ) * detInv;
+
+  // te[ 5 ] =  ( n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44 ) * detInv;
+
+  //                          c1                c1          c2    c3    c4          c3          c2    c3    c4          c3
+  //                          c1                c1          c6    c7    c8          c7          c6    c9    c8          c9
+  // te[ 6 ] =  ( n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44 ) * detInv;
+  // te[ 7 ] =  ( n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43 ) * detInv;
+  // te[ 9 ] =  ( n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44 ) * detInv;
+
+  // te[ 10 ] = ( n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44 ) * detInv;
+
+  //                          c1                c1          c2    c3    c4          c3          c2    c3    c4          c3
+  //                          c10               c10         c11   c12   c8          c12         c11   c13   c8          c13
+  // te[ 11 ] = ( n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43 ) * detInv;
+
+  // te[ 13 ] = ( n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34 ) * detInv;
+  // te[ 14 ] = ( n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34 ) * detInv;
+  // te[ 15 ] = ( n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33 ) * detInv;
+  // clang-format on
+
+  float n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3], n12 = te[4],
+        n22 = te[5], n32 = te[6], n42 = te[7], n13 = te[8], n23 = te[9],
+        n33 = te[10], n43 = te[11], n14 = te[12], n24 = te[13], n34 = te[14],
+        n44 = te[15];
+
+  v128_t n_1 = wasm_v128_load(te);
+  v128_t l1, l2, l3, r1, r2, r3, m, s1, s2, s3, t1_, c1, c2, c3, c4, c5, c6, c7,
+      c8, c9, c10, c11, c12, c13;
+
+  l1 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n14), 0, n34);
+  l2 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n13), 0, n33);
+  l3 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n12), 0, n32);
+  r1 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n23), 1, n33);
+  r2 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n24), 1, n34);
+  r3 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n22), 1, n32);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n42), 3, n32);
+  s1 = wasm_f32x4_mul(l1, r1);
+  s1 = wasm_f32x4_sub(s1, wasm_f32x4_mul(l2, r2));
+  s1 = wasm_f32x4_mul(s1, m);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n43), 3, n33);
+  s2 = wasm_f32x4_mul(l1, r3);
+  s2 = wasm_f32x4_sub(s2, wasm_f32x4_mul(l3, r2));
+  s2 = wasm_f32x4_mul(s2, m);
+
+  m = wasm_f32x4_replace_lane(wasm_f32x4_splat(n44), 3, n34);
+  s3 = wasm_f32x4_mul(l2, r3);
+  s3 = wasm_f32x4_sub(s3, wasm_f32x4_mul(l3, r1));
+  s3 = wasm_f32x4_mul(s3, m);
+
+  t1_ = wasm_f32x4_mul(wasm_f32x4_add(wasm_f32x4_sub(s1, s2), s3),
+                       tmp_f32x4_const1);
+
+  // dot from glm
+  v128_t mul0 = wasm_f32x4_mul(n_1, t1_);
+  v128_t swp0 = wasm_i32x4_shuffle(mul0, mul0, 3, 2, 1, 0);
+  v128_t add0 = wasm_f32x4_add(mul0, swp0); // 0, 1, 2, 3
+  v128_t swp1 = wasm_i32x4_shuffle(add0, add0, 1, 0, 3, 2);
+  v128_t add1 = wasm_f32x4_add(add0, swp1); // 0, 1, 2, 3
+  v128_t detInv = wasm_f32x4_div(wasm_f32x4_splat(1), add1);
+
+  c1 = wasm_f32x4_splat(n41);
+  c2 = wasm_f32x4_splat(n31);
+  c3 = wasm_i32x4_shuffle(wasm_f32x4_splat(n43), wasm_f32x4_splat(n42), 0, 4, 4,
+                          0);
+  c4 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n21), 3, n11);
+  c5 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n44), 2, n43);
+  c6 = wasm_i32x4_shuffle(wasm_f32x4_splat(n31), wasm_f32x4_splat(n21), 0, 0, 4,
+                          4);
+  c7 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n42), 2, n43);
+  c8 = wasm_f32x4_splat(n11);
+  c9 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n44), 1, n43);
+  c10 = wasm_f32x4_replace_lane(wasm_f32x4_splat(n31), 0, n41);
+  c11 = wasm_f32x4_splat(n21);
+  c12 = wasm_f32x4_make(n42, n33, n32, n32);
+  c13 = wasm_f32x4_make(n43, n34, n34, n33);
+
+  m = wasm_f32x4_mul(t1_, detInv);
+  te[0] = wasm_f32x4_extract_lane(m, 0);
+  te[4] = wasm_f32x4_extract_lane(m, 1);
+  te[8] = wasm_f32x4_extract_lane(m, 2);
+  te[12] = wasm_f32x4_extract_lane(m, 3);
+
+  l1 = wasm_f32x4_make(n24, n22, n23, n13);
+  l2 = wasm_f32x4_make(n33, n34, n32, n34);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c1);
+  l1 = wasm_f32x4_make(n23, n24, n22, n14);
+  l2 = wasm_f32x4_make(n34, n32, n33, n33);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c1);
+  s3 = wasm_f32x4_sub(s1, s2);
+
+  l1 = wasm_f32x4_make(-n24, n24, -n23, n14);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c2), c3);
+  l1 = wasm_f32x4_make(n34, -n34, n33, -n34);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c4, l1), c3);
+  s3 = wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2));
+
+  l1 = wasm_f32x4_make(n23, -n22, n22, -n13);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c2), c5);
+  l1 = wasm_f32x4_make(-n33, n32, -n32, n33);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c4, l1), c5);
+  s3 = wasm_f32x4_mul(wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2)), detInv);
+
+  te[1] = wasm_f32x4_extract_lane(s3, 0);
+  te[2] = wasm_f32x4_extract_lane(s3, 1);
+  te[3] = wasm_f32x4_extract_lane(s3, 2);
+  te[5] = wasm_f32x4_extract_lane(s3, 3);
+
+  l1 = wasm_i32x4_shuffle(wasm_f32x4_splat(n14), wasm_f32x4_splat(n12), 0, 4, 0,
+                          4);
+  l2 = wasm_f32x4_make(n32, n33, n23, n24);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c1);
+  l1 = wasm_f32x4_make(n12, n13, n13, n14);
+  l2 = wasm_f32x4_make(n34, n32, n24, n22);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c1);
+  s3 = wasm_f32x4_sub(s1, s2);
+
+  l1 = wasm_f32x4_make(-n14, n13, -n14, n14);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c6), c7);
+  l1 = wasm_f32x4_make(n34, -n33, n24, -n24);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c8, l1), c12);
+  s3 = wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2));
+
+  l1 = wasm_f32x4_make(n12, -n13, n12, -n12);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c11), c13);
+  l1 = wasm_f32x4_make(n22, n23, -n22, n22);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c8, l1), c13);
+  s3 = wasm_f32x4_mul(wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2)), detInv);
+
+  te[11] = wasm_f32x4_extract_lane(s3, 0);
+  te[13] = wasm_f32x4_extract_lane(s3, 1);
+  te[14] = wasm_f32x4_extract_lane(s3, 2);
+  te[15] = wasm_f32x4_extract_lane(s3, 3);
+
+  l1 = wasm_f32x4_make(n13, n13, n14, n12);
+  l2 = wasm_f32x4_make(n22, n24, n22, n23);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c10);
+  l1 = wasm_f32x4_make(n12, n14, n12, n13);
+  l2 = wasm_f32x4_make(n23, n23, n24, n22);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(l1, l2), c1);
+  s3 = wasm_f32x4_sub(s1, s2);
+
+  l1 = wasm_f32x4_make(-n13, n14, -n14, n13);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c11), c12);
+  l1 = wasm_f32x4_make(n23, -n24, n24, -n23);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c8, l1), c7);
+  s3 = wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2));
+
+  l1 = wasm_f32x4_make(n12, -n12, n13, -n12);
+  s1 = wasm_f32x4_mul(wasm_f32x4_mul(l1, c6), c9);
+  l1 = wasm_f32x4_make(-n32, n32, -n23, n22);
+  s2 = wasm_f32x4_mul(wasm_f32x4_mul(c8, l1), c9);
+  s3 = wasm_f32x4_mul(wasm_f32x4_add(s3, wasm_f32x4_add(s1, s2)), detInv);
+
+  te[6] = wasm_f32x4_extract_lane(s3, 0);
+  te[7] = wasm_f32x4_extract_lane(s3, 1);
+  te[8] = wasm_f32x4_extract_lane(s3, 2);
+  te[10] = wasm_f32x4_extract_lane(s3, 3);
 }
 
 float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};
