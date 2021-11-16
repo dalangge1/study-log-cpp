@@ -2,16 +2,55 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-16
+
+0. simd 比繁琐的问题在于运算前的数据填充, 还是得看看 glm 学习下, glm 主要还是使用 shuffle, 但是 wasm-simd 翻译到对应平台的 simd 指令是组合指令...
+1. 要不尝试只用 v128.load 读数据的方式
+2. 翻译 gl-matrix 的版本的 invert 确实快不少, 但是还缺一步 transpose
+
+> [wasm-simd/Instructions.md](https://github.com/zeux/wasm-simd/blob/master/Shuffles.md) \
+> [wasm-simd/Shuffles.md](https://github.com/zeux/wasm-simd/blob/master/Shuffles.md#unpacks)
+
+应该使用最多应该时 unpacks 的方式
+
+| op                 | v8 x64 | v8 arm |
+| ------------------ | ------ | ------ |
+| v8x16.shuffle      | 1-11   | 1-12?  |
+| f32x4.extract_lane | 2      | 1      |
+| f32x4.replace_lane | 1      | 1-2    |
+| f32x4.splat        | 2      | 1      |
+| f32x4.abs          | 3      | 1      |
+| f32x4.neg          | 3      | 1      |
+| f32x4.sqrt         | 1      | 1      |
+| f32x4.add          | 1      | 1      |
+| f32x4.sub          | 1      | 1      |
+| f32x4.mul          | 1      | 1      |
+| f32x4.div          | 1      | 1      |
+| f32x4.min          | 6      | 1      |
+| f32x4.max          | 6      | 1      |
+| v128.load          | 1      | 1      |
+| v128.store         | 1      | 1      |
+
+> matrix_invert_benchmark_1000000:
+
+| Key        | Value            |
+| ---------- | ---------------- |
+| wasm       | 42.00ms (x2.154) |
+| wasm2      | 28.30ms (x1.451) |
+| wasm_simd  | 41.30ms (x2.118) |
+| wasm_simd2 | 19.50ms (x1.000) |
+| threejs    | 44.70ms (x2.292) |
+
 ## 2021-11-15
 
-0. 开始翻译invert了, 三个主要的运算翻译完后, 就开始处理内存分配的问题了
-1. invert这耗时又是没性能优势啊,这个simd的优化不简单,估计得找找相关规则,或者一些指令的耗时情况
+0. 开始翻译 invert 了, 三个主要的运算翻译完后, 就开始处理内存分配的问题了
+1. invert 这耗时又是没性能优势啊,这个 simd 的优化不简单,估计得找找相关规则,或者一些指令的耗时情况
 
 ## 2021-11-12
 
 0. 测试代码有点凌乱, 版本也多, 需整理
-1. 不同场景测试结果有差距 这个仓库里的determinant性能比determinant2快上2ms https://github.com/deepkolos/matrix-f32-array-performace-issue/
-2. vscode的c++的代码提示远不如js的...估计还是看看怎么配置, 连个分号缺少都不会报错...reference也不太工作...这开发体验真的太差了(clangd还行)
+1. 不同场景测试结果有差距 这个仓库里的 determinant 性能比 determinant2 快上 2ms https://github.com/deepkolos/matrix-f32-array-performace-issue/
+2. vscode 的 c++的代码提示远不如 js 的...估计还是看看怎么配置, 连个分号缺少都不会报错...reference 也不太工作...这开发体验真的太差了(clangd 还行)
 
 ## 2021-11-11
 

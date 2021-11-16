@@ -242,6 +242,53 @@ void mat4_invert(float te[16]) {
 		te[ 15 ] = ( n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33 ) * detInv;
 
 }
+
+// gl-matrix看着效率确实是比threejs的高
+void mat4_invert2(float a[16]) {
+  float a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+  float a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+  float a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+  float a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+  float b00 = a00 * a11 - a01 * a10;
+  float b01 = a00 * a12 - a02 * a10;
+  float b02 = a00 * a13 - a03 * a10;
+  float b03 = a01 * a12 - a02 * a11;
+  float b04 = a01 * a13 - a03 * a11;
+  float b05 = a02 * a13 - a03 * a12;
+  float b06 = a20 * a31 - a21 * a30;
+  float b07 = a20 * a32 - a22 * a30;
+  float b08 = a20 * a33 - a23 * a30;
+  float b09 = a21 * a32 - a22 * a31;
+  float b10 = a21 * a33 - a23 * a31;
+  float b11 = a22 * a33 - a23 * a32;
+
+  // Calculate the determinant
+  float det =
+    b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+  if (!det) {
+    return;
+  }
+  det = 1.0 / det;
+
+  a[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+  a[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+  a[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+  a[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+  a[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+  a[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+  a[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+  a[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+  a[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+  a[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+  a[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+  a[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+  a[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+  a[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+  a[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+  a[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+}
 // clang-format on
 
 #ifdef __SIMD__
@@ -1308,6 +1355,166 @@ void mat4_invert_simd(float te[16]) {
   te[7] = wasm_f32x4_extract_lane(s3, 1);
   te[8] = wasm_f32x4_extract_lane(s3, 2);
   te[10] = wasm_f32x4_extract_lane(s3, 3);
+}
+
+void mat4_invert_simd2(float a[16]) {
+  // clang-format off
+  // float a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+  // float a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+  // float a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+  // float a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+  v128_t a0_ = wasm_v128_load(a);
+  v128_t a1_ = wasm_v128_load(a + 4);
+  v128_t a2_ = wasm_v128_load(a + 8);
+  v128_t a3_ = wasm_v128_load(a + 12);
+
+  // 出奇的有规律的一般都是好算法...
+  v128_t l0, l1, l2, r0, r1, r2, r;
+
+  l0 = wasm_i32x4_shuffle(a0_, a0_, 0, 0, 0, 1);
+  l1 = wasm_i32x4_shuffle(a0_, a0_, 0, 1, 2, 1);
+  r0 = wasm_i32x4_shuffle(a1_, a1_, 0, 1, 2, 1);
+  r1 = wasm_i32x4_shuffle(a1_, a1_, 0, 0, 0, 1);
+  v128_t s0 = wasm_f32x4_sub(wasm_f32x4_mul(l0, r0), wasm_f32x4_mul(l1, r1));
+
+  // // s0       l0    r0    l1    r1
+  // float b00 = a00 * a11 - a01 * a10;
+  // float b01 = a00 * a12 - a02 * a10;
+  // float b02 = a00 * a13 - a03 * a10;
+  // float b03 = a01 * a12 - a02 * a11;
+
+  l0 = wasm_i32x4_shuffle(a0_, a2_, 1, 2, 4, 4);
+  l1 = wasm_i32x4_shuffle(a0_, a2_, 3, 3, 5, 6);
+  r0 = wasm_i32x4_shuffle(a1_, a3_, 3, 3, 5, 6);
+  r1 = wasm_i32x4_shuffle(a1_, a3_, 1, 2, 4, 4);
+  v128_t s1 = wasm_f32x4_sub(wasm_f32x4_mul(l0, r0), wasm_f32x4_mul(l1, r1));
+
+  // // s1       l0    r0    l1    r1
+  // float b04 = a01 * a13 - a03 * a11;
+  // float b05 = a02 * a13 - a03 * a12;
+  // float b06 = a20 * a31 - a21 * a30;
+  // float b07 = a20 * a32 - a22 * a30;
+
+  l0 = wasm_i32x4_shuffle(a2_, a2_, 0, 1, 1, 2);
+  l1 = wasm_i32x4_shuffle(a2_, a2_, 3, 2, 3, 3);
+  r0 = wasm_i32x4_shuffle(a3_, a3_, 3, 2, 3, 3);
+  r1 = wasm_i32x4_shuffle(a3_, a3_, 0, 1, 1, 2);
+  v128_t s2 = wasm_f32x4_sub(wasm_f32x4_mul(l0, r0), wasm_f32x4_mul(l1, r1));
+
+  // // s2       l0    r0    l1    r1
+  // float b08 = a20 * a33 - a23 * a30;
+  // float b09 = a21 * a32 - a22 * a31;
+  // float b10 = a21 * a33 - a23 * a31;
+  // float b11 = a22 * a33 - a23 * a32;
+
+  v128_t s2_reverse = wasm_i32x4_shuffle(s2, s2, 3, 2, 1, 0);
+  v128_t s1_h = wasm_i32x4_shuffle(s1, s1, 0, 1, 4, 5);
+  v128_t s1_l = wasm_i32x4_shuffle(s1, s1, 2, 3, 6, 7);
+
+  v128_t v0 = wasm_f32x4_const(1, -1, 1, 1);
+  v128_t v1 = wasm_f32x4_const(-1, 1, -1, 1);
+  v128_t v2 = wasm_f32x4_const(1, 1, 1, 1);
+  v128_t v3 = wasm_f32x4_const(1, -1, 1, -1);
+
+  v128_t d0 = wasm_f32x4_mul(v0, wasm_f32x4_mul(s0, s2_reverse));
+  v128_t d1 = wasm_f32x4_mul(v1, wasm_f32x4_mul(s1_h, s1_l));
+  //     d0                                     0  1  2  3
+  v128_t d0_swap0 = wasm_i32x4_shuffle(d0, d0, 2, 3, 0, 1);
+  v128_t d0_add0 = wasm_f32x4_add(d0, d0_swap0); // 0+2 1+3 0+2 1+3
+  v128_t d0_swap1 = wasm_i32x4_shuffle(d0_add0, d0_add0, 1, 0, 3, 2);
+  v128_t d0_add1 = wasm_f32x4_add(d0_add0, d0_swap1); // 0+2+1+3
+
+  v128_t d1_swap0 = wasm_i32x4_shuffle(d1, d1, 1, 0, 3, 2);
+  v128_t d1_add0 = wasm_f32x4_add(d1, d1_swap0); // 0+1
+  v128_t v_det = wasm_f32x4_add(d0_add1, d1_add0);
+
+  float det = wasm_f32x4_extract_lane(v_det, 0);
+
+  //           // d0
+  // float det = b00 * b11 
+  //           - b01 * b10 
+  //           + b02 * b09 
+  //           + b03 * b08 
+  //           // d1
+  //           - b04 * b07 
+  //           + b05 * b06;
+
+  if (!det) return;
+
+  v128_t v_det_invert = wasm_f32x4_div(v2, v_det);
+
+  // det = 1.0 / det;
+
+  l0 = wasm_i32x4_shuffle(a1_, a1_, 1, 2, 0, 1);
+  l1 = wasm_i32x4_shuffle(a1_, a1_, 2, 0, 1, 0);
+  l2 = wasm_i32x4_shuffle(a1_, a1_, 3, 3, 3, 2);
+  r0 = wasm_i32x4_shuffle(s2, s1, 3, 0, 2, 7);
+  r1 = wasm_i32x4_shuffle(s2, s2, 2, 3, 0, 1);
+  r2 = wasm_i32x4_shuffle(s2, s1, 1, 7, 6, 6);
+  v128_t s3 = wasm_f32x4_mul(wasm_f32x4_add(
+    wasm_f32x4_sub(wasm_f32x4_mul(l0, r0), wasm_f32x4_mul(l1, r1)),
+    wasm_f32x4_mul(wasm_f32x4_mul(l2, r2), v3)
+  ), v_det_invert);
+
+  // // s3   l0    r0    l1    r1    l2    r2
+  // a[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+  // a[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+  // a[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+  // a[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+
+  l0 = wasm_i32x4_shuffle(a0_, a0_, 2, 0, 1, 0);
+  l1 = wasm_i32x4_shuffle(a0_, a0_, 1, 2, 0, 1);
+  l2 = wasm_i32x4_shuffle(a0_, a0_, 3, 3, 3, 2);
+  v128_t s4 = wasm_f32x4_mul(wasm_f32x4_add(
+    wasm_f32x4_sub(wasm_f32x4_mul(l0, r1), wasm_f32x4_mul(l1, r0)),
+    wasm_f32x4_mul(wasm_f32x4_mul(l2, r2), v3)
+  ), v_det_invert);
+
+  // // s4   l0    r0    l1    r1    l2    r2
+  // a[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+  // a[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+  // a[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+  // a[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+
+  l0 = wasm_i32x4_shuffle(a3_, a3_, 1, 2, 0, 1);
+  l1 = wasm_i32x4_shuffle(a3_, a3_, 2, 0, 1, 0);
+  l2 = wasm_i32x4_shuffle(a3_, a3_, 3, 3, 3, 2);
+  r0 = wasm_i32x4_shuffle(s1, s0, 1, 6, 0, 5);
+  r1 = wasm_i32x4_shuffle(s1, s0, 0, 1, 6, 7);
+  r2 = wasm_i32x4_shuffle(s0, s0, 3, 1, 0, 0);
+  v128_t s5 = wasm_f32x4_mul(wasm_f32x4_add(
+    wasm_f32x4_sub(wasm_f32x4_mul(l0, r0), wasm_f32x4_mul(l1, r1)),
+    wasm_f32x4_mul(wasm_f32x4_mul(l2, r2), v3)
+  ), v_det_invert);
+
+  // // s5   l0    r0    l1    r1    l2    r2
+  // a[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+  // a[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+  // a[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+  // a[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+
+  l0 = wasm_i32x4_shuffle(a2_, a2_, 2, 0, 1, 0);
+  l1 = wasm_i32x4_shuffle(a2_, a2_, 1, 2, 0, 1);
+  l2 = wasm_i32x4_shuffle(a2_, a2_, 3, 3, 3, 2);
+  v128_t s6 = wasm_f32x4_mul(wasm_f32x4_add(
+    wasm_f32x4_sub(wasm_f32x4_mul(l0, r1), wasm_f32x4_mul(l1, r0)),
+    wasm_f32x4_mul(wasm_f32x4_mul(l2, r2), v3)
+  ), v_det_invert);
+
+  // // s6   l0    r0    l1    r1    l2    r2
+  // a[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+  // a[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+  // a[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+  // a[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+  // TODO transpose一下
+
+  wasm_v128_store(a, s3);
+  wasm_v128_store(a + 4, s4);
+  wasm_v128_store(a + 8, s5);
+  wasm_v128_store(a + 12, s6);
+  // clang-format on
 }
 
 float m1[16] = {2, 3, 4, 5, 6, 7, 8, 9, 9, 8, 7, 6, 5, 4, 3, 2};

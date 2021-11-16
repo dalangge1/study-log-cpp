@@ -594,8 +594,14 @@ export async function matrix() {
         wasm() {
           wasmAPI.mat4_invert(state.cArrayPointerA);
         },
+        wasm2() {
+          wasmAPI.mat4_invert2(state.cArrayPointerA);
+        },
         wasm_simd() {
           wasmSIMDAPI.mat4_invert_simd(stateSIMD.cArrayPointerA);
+        },
+        wasm_simd2() {
+          wasmSIMDAPI.mat4_invert_simd2(stateSIMD.cArrayPointerA);
         },
         threejs() {
           m4JSA.invert();
