@@ -2,11 +2,16 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-11-17
+
+0. loop in wasm的simd还是能快一倍
+1. 矩阵关键的运算相关3个方法算是翻译完了, 准备编写内存管理了
+
 ## 2021-11-16
 
 0. simd 比繁琐的问题在于运算前的数据填充, 还是得看看 glm 学习下, glm 主要还是使用 shuffle, 但是 wasm-simd 翻译到对应平台的 simd 指令是组合指令...
 1. 要不尝试只用 v128.load 读数据的方式
-2. 翻译 gl-matrix 的版本的 invert 确实快不少, 但是还缺一步 transpose
+2. 翻译 gl-matrix 的版本的 invert 确实快不少, 但是还缺一步 transpose, 不过相比于 wasm 版本只有快了 40%
 
 > [wasm-simd/Instructions.md](https://github.com/zeux/wasm-simd/blob/master/Shuffles.md) \
 > [wasm-simd/Shuffles.md](https://github.com/zeux/wasm-simd/blob/master/Shuffles.md#unpacks)

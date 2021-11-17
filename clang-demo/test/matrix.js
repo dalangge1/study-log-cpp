@@ -609,5 +609,19 @@ export async function matrix() {
       },
       1000_000,
     );
+
+    const loopCount = 1_000_000;
+    benchmark(
+      {
+        wasm() {
+          wasmSIMDAPI.test(9, loopCount);
+        },
+        wasm_simd() {
+          wasmSIMDAPI.test(10, loopCount);
+        },
+      },
+      1,
+      `_loop_in_wasm_${loopCount}`,
+    );
   });
 }

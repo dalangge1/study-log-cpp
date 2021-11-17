@@ -1603,6 +1603,20 @@ void test(int type, int loop) {
       m2Ptr = tmp1Ptr;
       m1Ptr[0] = mat4_determinant_simd5(m1Ptr);
     }
+  if (type == 9)
+    for (i = 0; i < loop; i++) {
+      tmp1Ptr = m1Ptr;
+      m1Ptr = m2Ptr;
+      m2Ptr = tmp1Ptr;
+      mat4_invert2(m1Ptr);
+    }
+  if (type == 10)
+    for (i = 0; i < loop; i++) {
+      tmp1Ptr = m1Ptr;
+      m1Ptr = m2Ptr;
+      m2Ptr = tmp1Ptr;
+      mat4_invert_simd2(m1Ptr);
+    }
 }
 
 #endif
