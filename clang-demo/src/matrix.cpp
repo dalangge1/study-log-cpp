@@ -1509,11 +1509,28 @@ void mat4_invert_simd2(float a[16]) {
   // a[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
 
   // TODO transpose一下
+  v128_t n_1 = s3;
+  v128_t n_2 = s4;
+  v128_t n_3 = s5;
+  v128_t n_4 = s6;
+  v128_t tmp0 = wasm_i32x4_shuffle(n_1, n_2, 0, 4, 1, 5);
+  v128_t tmp2 = wasm_i32x4_shuffle(n_1, n_2, 2, 6, 3, 7);
+  v128_t tmp1 = wasm_i32x4_shuffle(n_3, n_4, 0, 4, 1, 5);
+  v128_t tmp3 = wasm_i32x4_shuffle(n_3, n_4, 2, 6, 3, 7);
 
-  wasm_v128_store(a, s3);
-  wasm_v128_store(a + 4, s4);
-  wasm_v128_store(a + 8, s5);
-  wasm_v128_store(a + 12, s6);
+  v128_t n1_ = wasm_i32x4_shuffle(tmp0, tmp1, 0, 1, 4, 5);
+  v128_t n2_ = wasm_i32x4_shuffle(tmp0, tmp1, 2, 3, 6, 7);
+  v128_t n3_ = wasm_i32x4_shuffle(tmp2, tmp3, 0, 1, 4, 5);
+  v128_t n4_ = wasm_i32x4_shuffle(tmp2, tmp3, 2, 3, 6, 7);
+
+  // wasm_v128_store(a, s3);
+  // wasm_v128_store(a + 4, s4);
+  // wasm_v128_store(a + 8, s5);
+  // wasm_v128_store(a + 12, s6);
+  wasm_v128_store(a, n1_);
+  wasm_v128_store(a + 4, n2_);
+  wasm_v128_store(a + 8, n3_);
+  wasm_v128_store(a + 12, n4_);
   // clang-format on
 }
 
