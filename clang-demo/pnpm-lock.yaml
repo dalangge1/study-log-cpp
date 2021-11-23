@@ -1,0 +1,19 @@
+lockfileVersion: 5.3
+
+specifiers:
+  gl-matrix-wasm: ^0.8.0
+  three: ^0.134.0
+
+dependencies:
+  gl-matrix-wasm: 0.8.0
+  three: 0.134.0
+
+packages:
+
+  /gl-matrix-wasm/0.8.0:
+    resolution: {integrity: sha512-Q2Krk+hIG3V2eyiomx9YCaDXlyrD6/4Nv6Q2zRzV4XJniVNOw+JWD2UeOZ6Ma+LOzP1WWd9vXBH6IzAOrcoZOw==}
+    dev: false
+
+  /three/0.134.0:
+    resolution: {integrity: sha512-LbBerg7GaSPjYtTOnu41AMp7tV6efUNR3p4Wk5NzkSsNTBuA5mDGOfwwZL1jhhVMLx9V20HolIUo0+U3AXehbg==}
+    dev: false
