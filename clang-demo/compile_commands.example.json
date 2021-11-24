@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/User/bytedance/opensource/study-log-cpp/clang-demo/src",
+    "command": "clang -msimd128 -D__SIMD__=1",
+    "file": "matrix.cpp"
+  }
+]
