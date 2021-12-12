@@ -2,6 +2,37 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-08
+
+`CMake`多个executable指定CXX标准需要用一下方法
+
+```cmake
+set_property(TARGET main PROPERTY CXX_STANDARD 14)
+set_property(TARGET main_test PROPERTY CXX_STANDARD 14)
+```
+
+## 2021-12-07
+
+`#include <stuf>`和`#include "stuf"`的区别
+
+1. 系统自带的头文件用尖括号括起来，这样编译器会在系统文件目录下查找。
+
+2. 用户自定义的文件用双引号括起来，编译器首先会在用户目录下查找，然后在到 C++安装目录（比如 VC 中可以指定和修改库文件查找路径，Unix 和 Linux 中可以通过环境变量来设定）中查找，最后在系统文件中查找。
+
+https://gcc.gnu.org/onlinedocs/cpp/Search-Path.html
+
+`#pragam once`与`#ifndef`区别
+
+1. `#ifndef` 会使得编译时间相对较长
+
+2. `#pragma once` 由编译器提供保证：同一个文件不会被包含多次。注意这里所说的“同一个文件”是指物理上的一个文件，而不是指内容相同的两个文件。你无法对一个头文件中的一段代码作 pragma once 声明，而只能针对文件。
+
+https://www.cnblogs.com/hokyhu/archive/2009/03/30/1425604.html
+
+`.inl`文件是什么
+
+https://stackoverflow.com/questions/1208028/significance-of-a-inl-file-in-c/1208062
+
 ## 2021-11-24
 
 0. 部门内流行躺平，不过我自己习惯还是得继续推进，手脑同步才行，即便流水账，习惯不能丢。
