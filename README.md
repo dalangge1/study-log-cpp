@@ -2,9 +2,14 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-14
+
+0. 增加打印 Class/Struct 内存布局 Demo
+1. CMake Tools 支持 `.vscode/setting.json` `cmake.configureArgs` `cmake.buildArgs` 配置配置/构建参数
+
 ## 2021-12-08
 
-`CMake`多个executable指定CXX标准需要用一下方法
+`CMake`多个 executable 指定 CXX 标准需要用一下方法
 
 ```cmake
 set_property(TARGET main PROPERTY CXX_STANDARD 14)
