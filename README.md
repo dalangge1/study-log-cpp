@@ -2,6 +2,37 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-16
+
+0. CPP 函数默认值
+1. CPP 不能静态检测 nullptr 只能注释...怪不得 nullptr 恐怖
+
+```c++
+void f(int, int);     // #1
+void f(int, int = 7); // #2 OK: adds a default
+
+void h() {
+    f(3); // #1 and #2 are in scope; makes a call to f(3,7)
+    void f(int = 1, int); // Error: inner scope declarations don't acquire defaults
+}
+```
+
+https://en.cppreference.com/w/cpp/language/default_arguments
+
+## 2021-12-15
+
+0. 了解`#include`和`#include_next`的区别
+1. inline function(不过 bx 还会增加个`constexpr` `__attribute__( (const) )`修饰符)
+
+```c++
+inline return-type function-name(parameters)
+{
+    // function code
+}
+```
+
+https://www.geeksforgeeks.org/inline-functions-cpp/
+
 ## 2021-12-14
 
 0. 增加打印 Class/Struct 内存布局 Demo
