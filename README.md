@@ -2,6 +2,33 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-20
+
+0. 初始化静态成员
+1. 如果出现 pp_including_mainfile_in_preamble 头文件的相互循环依赖,可以把引用挪到 source file 里
+2. 看到另一种指针代替写法 &T FN(K &A); 和上层使用用法相同(和指针有不少[区别](https://segmentfault.com/a/1190000023643326))
+
+```cpp
+// Header file
+class Game {
+  public:
+    // Declaration:
+    static const struct timespec UPDATE_TIMEOUT;
+  ...
+};
+
+// Source file
+const struct timespec Game::UPDATE_TIMEOUT = { 10 , 10 };  // Definition
+
+// 引用
+explicit inline tmat3(const tmat4<T> &m) noexcept
+{
+  for (int col = 0; col < 3; col++)
+    for (int row = 0; row < 3; row++)
+      vec[col][row] = m[col][row];
+}
+```
+
 ## 2021-12-16
 
 0. CPP 函数默认值
