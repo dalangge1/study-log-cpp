@@ -2,6 +2,33 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-22
+
+const 的两种位置 https://docs.microsoft.com/en-us/cpp/cpp/const-cpp?view=msvc-170
+
+```cpp
+const declaration ;
+member-function const ;
+
+// constant_values3.cpp
+int main() {
+   char *mybuf = 0, *yourbuf;
+   char *const aptr = mybuf; // const指针, 但指针指向非const
+   *aptr = 'a';   // OK
+   aptr = yourbuf;   // C3892
+}
+```
+
+inline function 还有条件 https://www.geeksforgeeks.org/inline-functions-cpp/
+
+Remember, inlining is only a request to the compiler, not a command. Compiler can ignore the request for inlining. Compiler may not perform inlining in such circumstances like:
+
+1. If a function contains a loop. (for, while, do-while)
+2. If a function contains static variables. (这个比较奇怪了)
+3. If a function is recursive.
+4. If a function return type is other than void, and the return statement doesn’t exist in function body.
+5. If a function contains switch or goto statement.
+
 ## 2021-12-21
 
 Granite 中 muglm 大量使用入参都是引用, 出参是新 struct
