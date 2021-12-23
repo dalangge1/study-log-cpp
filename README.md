@@ -2,6 +2,26 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-23
+
+0. 匿名函数
+
+```cpp
+// h,s,l ranges are in 0.0 - 1.0
+// @see HSL 到 RGB 替代方案 https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB 
+void Color::setFromHSL(float h, float s, float l) {
+    auto fn = [h, s, l](float n) -> float {
+        float a = s * min(l, 1 - l);
+        // float k = (n + h / 30); // [0,360]
+        float k = (n + h * 12); // [0,1]
+        return l - a * max(-1, min(k - 3, 9 - k, 1));
+    };
+    r = fn(0);
+    g = fn(8);
+    b = fn(4);
+}
+```
+
 ## 2021-12-22
 
 const 的两种位置 https://docs.microsoft.com/en-us/cpp/cpp/const-cpp?view=msvc-170
