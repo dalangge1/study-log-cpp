@@ -2,13 +2,37 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-27
+
+0. 通过 explicit 防止隐式转换 https://www.cnblogs.com/this-543273659/archive/2011/08/02/2124596.html
+
+explicit 作用:
+
+在 C++中，explicit 关键字用来修饰类的构造函数，被修饰的构造函数的类，不能发生相应的隐式类型转换，只能以显示的方式进行类型转换。
+
+explicit 使用注意事项:
+
+    * explicit 关键字只能用于类内部的构造函数声明上。
+    * explicit 关键字作用于单个参数的构造函数。
+    * 在C++中，explicit关键字用来修饰类的构造函数，被修饰的构造函数的类，不能发生相应的隐式类型转换
+
+## 2021-12-24
+
+0. [List Initialization](https://blog.csdn.net/caoshangpa/article/details/79169930)
+1. POD(plain old data，简单来说就是可以用 memcpy 复制的对象)类型
+2. [拷贝构造函数](http://c.biancheng.net/view/151.html)
+
+```cpp
+
+```
+
 ## 2021-12-23
 
 0. 匿名函数
 
 ```cpp
 // h,s,l ranges are in 0.0 - 1.0
-// @see HSL 到 RGB 替代方案 https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB 
+// @see HSL 到 RGB 替代方案 https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_RGB
 void Color::setFromHSL(float h, float s, float l) {
     auto fn = [h, s, l](float n) -> float {
         float a = s * min(l, 1 - l);
