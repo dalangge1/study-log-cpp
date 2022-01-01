@@ -2,6 +2,27 @@
 
 > 铁打的仓库，流水的日志
 
+## 2021-12-31
+
+cmake debug 打印日志, 定义函数
+
+```cmake
+message(STATUS "cmake_debug------------------------------------------{")
+message(STATUS ${googlebenchmark_SOURCE_DIR})
+message(STATUS ${googlebenchmark_BINARY_DIR})
+
+macro(print_all_variables)
+    message(STATUS "print_all_variables------------------------------------------{")
+    get_cmake_property(_variableNames VARIABLES)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+    message(STATUS "print_all_variables------------------------------------------}")
+endmacro()
+
+print_all_variables()
+```
+
 ## 2021-12-27
 
 0. 通过 explicit 防止隐式转换 https://www.cnblogs.com/this-543273659/archive/2011/08/02/2124596.html
