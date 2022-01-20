@@ -2,6 +2,10 @@
 
 > 铁打的仓库，流水的日志
 
+## 2022-1-18
+
+0. thread demo 了解mutex condition_variable的使用方式
+
 ## 2022-1-6
 
 0. [移动构造函数](https://stackoverflow.com/questions/4986673/c11-rvalues-and-move-semantics-confusion-return-statement)
@@ -9,7 +13,7 @@
 ## 2022-1-5
 
 0. 区分常变量和常指针 const 的位置
-1. struct/class占用的空间,会有字节对齐,虚函数会存一个虚指针,每个集成的基类的虚指针都会有一个,几遍相同,也不会合并. 空class占1字节.
+1. struct/class 占用的空间,会有字节对齐,虚函数会存一个虚指针,每个集成的基类的虚指针都会有一个,几遍相同,也不会合并. 空 class 占 1 字节.
 2. https://clang.llvm.org/docs/analyzer/developer-docs/IPA.html
 
 ## 2021-12-31
