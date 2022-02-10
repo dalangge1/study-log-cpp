@@ -15,7 +15,7 @@ template <typename T> void printArray(std::vector<T> &array);
 // 线程数目,任务拆分,都是内部函数实现
 
 template <typename T>
-void threadSort(std::vector<T> &array, int minThreadPayload = 32,
+void threadSort(std::vector<T> &array, int minThreadPayload = 5000,
                 int maxThread = std::thread::hardware_concurrency()) {
   // 系统可用线程数
   // 单个线程处理最低下线
@@ -175,7 +175,7 @@ int main(void) {
 
   array.clear();
   std::vector<float> array1{};
-  for (long long i = 0; i < 100000000; i++) {
+  for (long long i = 0; i < 40000; i++) {
     float n = random(0, 9);
     array.push_back(n);
     array1.push_back(n);
@@ -188,6 +188,11 @@ int main(void) {
                       .count();
   std::cout << "sort cost:" << duration << std::endl;
   // -O2 100000000 cost 8.81494
+  // -O2 50000 cost 0.00287379
+  // -O2 40000 cost 0.00212787
+  // -O2 30000 cost 0.00140916
+  // -O2 20000 cost 0.00108422
+  // -O2 10000 cost 0.000463468
 
   startTime = std::chrono::high_resolution_clock::now();
   threadSort(array);
@@ -196,6 +201,11 @@ int main(void) {
                  .count();
   std::cout << "threadSort cost:" << duration << std::endl;
   // -O2 100000000 merge by std::sort cost 4.30087
+  // -O2 50000 merge by std::sort cost 0.00219565
+  // -O2 50000 merge by std::sort cost 0.00165555
+  // -O2 30000 merge by std::sort cost 0.00112804
+  // -O2 20000 merge by std::sort cost 0.001062
+  // -O2 10000 merge by std::sort cost 0.000543246
 
   startTime = std::chrono::high_resolution_clock::now();
   threadSortByMerge(array);
@@ -204,4 +214,9 @@ int main(void) {
                  .count();
   std::cout << "threadSortByMerge cost:" << duration << std::endl;
   // -O2 100000000 merge by mergesort cost 2.02728
+  // -O2 50000 merge by mergesort cost 0.00121518
+  // -O2 40000 merge by mergesort cost 0.00107022
+  // -O2 30000 merge by mergesort cost 0.000896142
+  // -O2 20000 merge by mergesort cost 0.000807467
+  // -O2 10000 merge by mergesort cost 0.000583132
 }
