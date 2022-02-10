@@ -29,6 +29,11 @@ void threadSort(std::vector<T> &array, int minThreadPayload = 32,
   // threadUsed,
   //        batchJobSize);
 
+  if (threadUsed <= 1) {
+    std::sort(array.begin(), array.end());
+    return;
+  }
+
   auto sort = [&](int threadId) {
     // cout可能被分割...
     // std::cout << "threadId:" << threadId << std::endl;
@@ -46,8 +51,101 @@ void threadSort(std::vector<T> &array, int minThreadPayload = 32,
   for (auto &thread : threads)
     thread.join();
 
-  // TODO 归并
   std::sort(array.begin(), array.end());
+}
+
+template <typename T>
+void threadSortByMerge(std::vector<T> &array, int minThreadPayload = 32,
+                       int maxThread = std::thread::hardware_concurrency()) {
+  auto length = array.size();
+  int batchNum = std::ceilf((float)length / (float)minThreadPayload);
+  int threadUsed = std::min(batchNum, maxThread);
+  int batchJobSize = std::ceilf((float)length / (float)threadUsed);
+  if (threadUsed <= 1) {
+    std::sort(array.begin(), array.end());
+    return;
+  }
+
+  auto sort = [&](int threadId) {
+    int startIndex = batchJobSize * threadId;
+    int endIndex = std::min((int)length, batchJobSize * (threadId + 1));
+    std::sort(array.begin() + startIndex, array.begin() + endIndex);
+  };
+
+  std::vector<std::thread> threads;
+  for (int i = 0; i < threadUsed; i++)
+    threads.push_back(std::thread(sort, i));
+
+  for (auto &thread : threads)
+    thread.join();
+
+  std::vector<std::vector<T>> chunks;
+  for (int i = 0; i < threadUsed; i++) {
+    int startIndex = batchJobSize * i;
+    int endIndex = std::min((int)length, batchJobSize * (i + 1));
+    chunks.push_back({array.begin() + startIndex, array.begin() + endIndex});
+  }
+
+  auto mergeSort = [&](std::vector<T> &input, std::vector<T> &chunk,
+                       std::vector<T> &output, int inputLen) -> int {
+    int inputIndex = 0;
+    int chunkIndex = 0;
+    int outputIndex = 0;
+    int inputEndIndex = inputLen;
+    int chunkEndIndex = chunk.size();
+
+    // printf("inputEndIndex: %d chunkEndIndex: %d \n", inputEndIndex,
+    // chunkEndIndex);
+
+    while (!(inputIndex == inputEndIndex || chunkIndex == chunkEndIndex)) {
+      // printf("0 ci: %d ii: %d oi: %d \n", chunkIndex, inputIndex,
+      // outputIndex);
+      if (chunk[chunkIndex] <= input[inputIndex]) {
+        output[outputIndex++] = chunk[chunkIndex++];
+      } else {
+        output[outputIndex++] = input[inputIndex++];
+      }
+    }
+
+    while (inputIndex != inputEndIndex) {
+      // printf("1 ci: %d ii: %d oi: %d \n", chunkIndex, inputIndex,
+      // outputIndex);
+      output[outputIndex++] = input[inputIndex++];
+    }
+    while (chunkIndex != chunkEndIndex) {
+      // printf("2 ci: %d ii: %d oi: %d \n", chunkIndex, inputIndex,
+      // outputIndex);
+      output[outputIndex++] = chunk[chunkIndex++];
+    }
+
+    return chunkEndIndex + inputEndIndex + 1;
+  };
+
+  if (threadUsed == 2) {
+    mergeSort(chunks[0], chunks[1], array, chunks[0].size());
+    return;
+  }
+
+  if (threadUsed > 2) {
+    std::vector<T> tmp(array.size());
+    std::vector<T> *input = &tmp;
+    std::vector<T> *output = &array;
+    std::vector<T> *tmpPtr;
+
+    int inputLen = mergeSort(chunks[0], chunks[1], tmp, chunks[0].size());
+    for (int i = 2; i < threadUsed; i++) {
+      inputLen = mergeSort(*input, chunks[i], *output, inputLen);
+
+      tmpPtr = input;
+      input = output;
+      output = tmpPtr;
+    }
+
+    // 奇数需要把tmp 复制到array
+    if ((threadUsed - 2) & 1) {
+      array = tmp;
+    }
+  }
 }
 
 inline float random(float min, float max) {
@@ -88,12 +186,22 @@ int main(void) {
   auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(
                       std::chrono::high_resolution_clock::now() - startTime)
                       .count();
-  std::cout << "sort cost:" << duration << std::endl; // 9.11922
+  std::cout << "sort cost:" << duration << std::endl;
+  // -O2 100000000 cost 8.81494
 
   startTime = std::chrono::high_resolution_clock::now();
   threadSort(array);
   duration = std::chrono::duration_cast<std::chrono::duration<double>>(
                  std::chrono::high_resolution_clock::now() - startTime)
                  .count();
-  std::cout << "threadSort cost:" << duration << std::endl; // 4.43894
+  std::cout << "threadSort cost:" << duration << std::endl;
+  // -O2 100000000 merge by std::sort cost 4.30087
+
+  startTime = std::chrono::high_resolution_clock::now();
+  threadSortByMerge(array);
+  duration = std::chrono::duration_cast<std::chrono::duration<double>>(
+                 std::chrono::high_resolution_clock::now() - startTime)
+                 .count();
+  std::cout << "threadSortByMerge cost:" << duration << std::endl;
+  // -O2 100000000 merge by mergesort cost 2.02728
 }
