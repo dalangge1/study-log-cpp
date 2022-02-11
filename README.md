@@ -2,6 +2,20 @@
 
 > 铁打的仓库，流水的日志
 
+## 2022-2-10
+
+cpp代码引入c代码, 头文件需要包一个`extern "C" {}`
+
+```cpp
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "quickjs.h"
+#ifdef __cplusplus
+}
+#endif
+```
+
 ## 2022-1-18
 
 0. thread demo 了解mutex condition_variable的使用方式
