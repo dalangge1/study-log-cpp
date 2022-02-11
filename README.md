@@ -2,6 +2,19 @@
 
 > 铁打的仓库，流水的日志
 
+## 2022-2-11
+
+C++的单例?
+
+```cpp
+struct A {
+  static map<string, float>& GetMap() {
+    static map<string, float> m;
+    return m;
+  }
+}
+```
+
 ## 2022-2-10
 
 cpp代码引入c代码, 头文件需要包一个`extern "C" {}`
