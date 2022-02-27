@@ -2,9 +2,27 @@
 
 > 铁打的仓库，流水的日志
 
+
+## 2022-2-21
+
+智能指针: 利用析构函数执行 delete, 重载指针运算符, 访问指针内的政客
+
+- `std::unique_ptr`: 一般用于临时动态分配的资源? 出了块作用域就会销毁, 配套`std::make_unique`
+- `std::shared_ptr`: 带引用计数,引入数等于 0, 了就会销毁资源
+
+
+## 2022-2-20
+
+遇到奇怪的问题 new float(1) 与 malloc(sizeof(float))的区别, 目前 new float 在会偶现 SIGSEGV ...改用 malloc 就没事了...
+
+```cpp
+float* ptr = new float(1);
+float* ptr2 = malloc(sizeof(float));
+```
+
 ## 2022-2-12
 
-指定占用多少位, 32位里, 高21位是size, 低11位是命令id, 不需要人工用位运算符划分
+指定占用多少位, 32 位里, 高 21 位是 size, 低 11 位是命令 id, 不需要人工用位运算符划分
 
 ```cpp
 struct CommandHeader {
@@ -28,7 +46,7 @@ struct A {
 
 ## 2022-2-10
 
-cpp代码引入c代码, 头文件需要包一个`extern "C" {}`
+cpp 代码引入 c 代码, 头文件需要包一个`extern "C" {}`
 
 ```cpp
 #ifdef __cplusplus
@@ -42,7 +60,7 @@ extern "C" {
 
 ## 2022-1-18
 
-0. thread demo 了解mutex condition_variable的使用方式
+0. thread demo 了解 mutex condition_variable 的使用方式
 
 ## 2022-1-6
 
