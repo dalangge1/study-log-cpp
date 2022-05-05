@@ -70,9 +70,7 @@ int main(void) {
 #if 1
   SAR_ALIGNMENT_16(struct) Matrix { float m[16]; };
 #else
-  struct Matrix {
-    float m[16];
-  };
+  struct Matrix { float m[16]; };
 #endif
 
   Matrix m0 = {};
