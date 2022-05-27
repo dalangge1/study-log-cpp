@@ -6,6 +6,7 @@ let taskChain = Promise.resolve();
 
 function arrayEqual(m0, m1) {
   for (let i = 0; i < m0.length; i++) {
+    if (Number.isNaN(m0[i]) || Number.isNaN(m1[i])) return false;
     if (Math.abs(m0[i] - m1[i]) > 0.0001) return false;
   }
   return true;

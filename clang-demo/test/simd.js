@@ -21,21 +21,9 @@ export async function simd() {
 
     // Turn that sequence of 32-bit integers
     // into a Int32Array, starting at that address.
-    const cArrayA = new Int32Array(
-      wasmAPI.memory.buffer,
-      cArrayPointerA,
-      jsArrayA.length,
-    );
-    const cArrayB = new Int32Array(
-      wasmAPI.memory.buffer,
-      cArrayPointerB,
-      jsArrayA.length,
-    );
-    const cArrayOut = new Int32Array(
-      wasmAPI.memory.buffer,
-      cArrayPointerOut,
-      jsArrayA.length,
-    );
+    const cArrayA = new Int32Array(wasmAPI.memory.buffer, cArrayPointerA, jsArrayA.length);
+    const cArrayB = new Int32Array(wasmAPI.memory.buffer, cArrayPointerB, jsArrayA.length);
+    const cArrayOut = new Int32Array(wasmAPI.memory.buffer, cArrayPointerOut, jsArrayA.length);
 
     // Copy the values from JS to C.
     cArrayA.set(jsArrayA);
@@ -47,6 +35,7 @@ export async function simd() {
       cArrayPointerA,
       cArrayOut,
       jsArrayA,
+      cArrayA,
     };
   }
 
@@ -117,7 +106,7 @@ export async function simd() {
   test('v32x4_shuffle', () => {
     expect(wasmSIMDAPI.test_f32x4_shuffle(1, 2, 3, 4)).toBe(10);
   });
-  test('benchmark', () => {
+  test('load benchmark', () => {
     benchmark(
       {
         make() {
@@ -132,5 +121,28 @@ export async function simd() {
       },
       1000_000,
     );
+  });
+
+  test('v128 as arg', () => {
+    const {
+      cArrayPointerA: offset,
+      cArrayA: { buffer },
+    } = stateSIMD;
+    console.log(offset);
+    wasmSIMDAPI.test_v128_arg(offset + 4);
+    expect(new Float32Array(buffer, offset + 4, 4)).toBe([5, 10, 15, 20]);
+
+    wasmSIMDAPI.test_v128_arg2(offset + 8, 1, 2, 3, 4);
+    expect(new Float32Array(buffer, offset + 8, 4)).toBe([1, 4, 9, 16]);
+
+    wasmSIMDAPI.test_v128_arr_arg(offset + 12);
+    expect(new Float32Array(buffer, offset + 12, 16)).toBe([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]);
+
+    wasmSIMDAPI.test_v128_arr_arg2(offset + 16, 1, 2, 3, 4);
+    expect(new Float32Array(buffer, offset + 16, 16)).toBe([
+      1, 4, 9, 16, 1, 4, 9, 16, 1, 4, 9, 16, 1, 4, 9, 16,
+    ]);
   });
 }
